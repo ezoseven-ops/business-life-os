@@ -1,0 +1,548 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── AUTH (Auth.js managed) ───
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── CORE ───
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  avatarUrl     String?
+  emailVerified DateTime?
+  role          UserRole  @default(TEAM)
+  workspaceId   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  workspace        Workspace?      @relation(fields: [workspaceId], references: [id])
+  ownedWorkspace   Workspace?      @relation("WorkspaceOwner")
+  accounts         Account[]
+  sessions         Session[]
+  assignedTasks    Task[]          @relation("TaskAssignee")
+  createdTasks     Task[]          @relation("TaskCreator")
+  notes            Note[]
+  events           Event[]
+  comments         Comment[]
+  activities       Activity[]
+  notifications    Notification[]
+  aiJobApprovals   AiJob[]         @relation("AiJobApprover")
+  projectMembers   ProjectMember[]
+  invitations      Invitation[]    @relation("InvitedUser")
+  sentInvitations  Invitation[]    @relation("InvitedBy")
+  eventAttendees   EventAttendee[]
+  linkedPerson     Person?         @relation("PersonUser")
+
+  @@index([workspaceId])
+  @@index([email])
+}
+
+enum UserRole {
+  OWNER
+  TEAM
+  CLIENT
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  ownerId   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner        User          @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members      User[]
+  projects     Project[]
+  notes        Note[]
+  events       Event[]
+  people       Person[]
+  files        File[]
+  messages     Message[]
+  integrations Integration[]
+  invitations  Invitation[]
+
+  @@index([slug])
+}
+
+// ─── PROJECTS & TASKS ───
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  workspaceId String
+  ownerId     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks          Task[]
+  notes          Note[]
+  projectMembers ProjectMember[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+}
+
+enum ProjectStatus {
+  ACTIVE
+  PAUSED
+  DONE
+  ARCHIVED
+}
+
+model Task {
+  id              String       @id @default(cuid())
+  title           String
+  description     String?
+  status          TaskStatus   @default(TODO)
+  priority        TaskPriority @default(MEDIUM)
+  dueDate         DateTime?
+  calendarEventId  String?
+  sourceMessageId  String?
+  projectId        String
+  assigneeId       String?
+  creatorId        String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee       User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator        User      @relation("TaskCreator", fields: [creatorId], references: [id])
+  sourceMessage  Message?  @relation(fields: [sourceMessageId], references: [id])
+  comments       Comment[]
+  files          File[]
+
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([projectId, status])
+  @@index([dueDate])
+  @@index([sourceMessageId])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  WAITING
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// ─── NOTES & VOICE ───
+
+model Note {
+  id          String   @id @default(cuid())
+  title       String?
+  content     String   @default("")
+  type        NoteType @default(QUICK)
+  projectId   String?
+  workspaceId String
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?   @relation(fields: [projectId], references: [id])
+  author    User       @relation(fields: [authorId], references: [id])
+  voiceNote VoiceNote?
+  comments  Comment[]
+  files     File[]
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([authorId])
+}
+
+enum NoteType {
+  QUICK
+  MEETING
+  VOICE
+}
+
+model VoiceNote {
+  id            String          @id @default(cuid())
+  noteId        String          @unique
+  audioUrl      String
+  duration      Int
+  transcription String?
+  status        VoiceNoteStatus @default(UPLOADED)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+}
+
+enum VoiceNoteStatus {
+  UPLOADED
+  TRANSCRIBING
+  DONE
+  FAILED
+}
+
+// ─── PEOPLE ───
+
+model Person {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  telegramId  String?
+  whatsappId  String?
+  company     String?
+  notes       String?
+  userId      String?  @unique
+  workspaceId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User?     @relation("PersonUser", fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([workspaceId])
+  @@index([telegramId])
+  @@index([whatsappId])
+}
+
+// ─── EVENTS ───
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startAt     DateTime
+  endAt       DateTime?
+  allDay      Boolean  @default(false)
+  location    String?
+  workspaceId String
+  creatorId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace  Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  creator    User            @relation(fields: [creatorId], references: [id])
+  attendees  EventAttendee[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, startAt])
+  @@index([creatorId])
+}
+
+// ─── COMMENTS & FILES ───
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  internal  Boolean  @default(false)
+  authorId  String
+  taskId    String?
+  noteId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author User  @relation(fields: [authorId], references: [id])
+  task   Task? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  note   Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([noteId])
+}
+
+model File {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  size        Int
+  mimeType    String
+  taskId      String?
+  noteId      String?
+  workspaceId String
+  uploadedById String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  task      Task?     @relation(fields: [taskId], references: [id])
+  note      Note?     @relation(fields: [noteId], references: [id])
+
+  @@index([workspaceId])
+  @@index([taskId])
+  @@index([noteId])
+}
+
+// ─── ACTIVITY & NOTIFICATIONS ───
+
+model Activity {
+  id         String         @id @default(cuid())
+  action     ActivityAction
+  entityType EntityType
+  entityId   String
+  userId     String
+  metadata   Json?
+  createdAt  DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum ActivityAction {
+  CREATED
+  UPDATED
+  DELETED
+  COMMENTED
+  STATUS_CHANGED
+  ASSIGNED
+}
+
+enum EntityType {
+  TASK
+  NOTE
+  PROJECT
+  PERSON
+  VOICE_NOTE
+  FILE
+  MESSAGE
+  EVENT
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  linkUrl   String?
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+// ─── COMMUNICATIONS ───
+
+model Message {
+  id          String           @id @default(cuid())
+  direction   MessageDirection
+  channel     MessageChannel
+  externalId  String?
+  content     String?
+  mediaUrl    String?
+  status      MessageStatus    @default(SENT)
+  rawPayload  Json?
+  personId    String?
+  workspaceId String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  person    Person?   @relation(fields: [personId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+
+  @@unique([channel, externalId])
+  @@index([workspaceId, channel])
+  @@index([personId])
+  @@index([createdAt])
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageChannel {
+  TELEGRAM
+  WHATSAPP
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model Integration {
+  id          String          @id @default(cuid())
+  type        IntegrationType
+  config      Json
+  enabled     Boolean         @default(true)
+  workspaceId String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, type])
+}
+
+enum IntegrationType {
+  TELEGRAM
+  WHATSAPP
+  APPLE_CALENDAR
+}
+
+// ─── PROJECT MEMBERS ───
+
+model ProjectMember {
+  id        String            @id @default(cuid())
+  role      ProjectMemberRole @default(CONTRIBUTOR)
+  userId    String
+  projectId String
+  createdAt DateTime          @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+enum ProjectMemberRole {
+  LEAD
+  CONTRIBUTOR
+  VIEWER
+}
+
+// ─── INVITATIONS ───
+
+model Invitation {
+  id          String           @id @default(cuid())
+  email       String
+  role        UserRole         @default(TEAM)
+  token       String           @unique @default(cuid())
+  status      InvitationStatus @default(PENDING)
+  workspaceId String
+  invitedById String
+  userId      String?
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User      @relation("InvitedBy", fields: [invitedById], references: [id])
+  user      User?     @relation("InvitedUser", fields: [userId], references: [id])
+
+  @@index([workspaceId])
+  @@index([email])
+  @@index([token])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+// ─── EVENT ATTENDEES ───
+
+model EventAttendee {
+  id        String                @id @default(cuid())
+  status    EventAttendeeStatus   @default(PENDING)
+  userId    String
+  eventId   String
+  createdAt DateTime              @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+enum EventAttendeeStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// ─── AI ───
+
+model AiJob {
+  id           String      @id @default(cuid())
+  type         AiJobType
+  status       AiJobStatus @default(PENDING)
+  input        Json
+  output       Json?
+  error        String?
+  entityType   EntityType
+  entityId     String
+  approvedAt   DateTime?
+  approvedById String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  approvedBy User? @relation("AiJobApprover", fields: [approvedById], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([status])
+}
+
+enum AiJobType {
+  TRANSCRIPTION
+  TASK_EXTRACTION
+}
+
+enum AiJobStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}

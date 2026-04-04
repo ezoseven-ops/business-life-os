@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { inviteUserAction, revokeInvitationAction, removeMemberAction, updateMemberRoleAction } from '@/modules/invitations/invitation.actions'
+import { ErrorBanner, SuccessBanner } from '@/components/ErrorStates'
 import type { UserRole } from '@prisma/client'
 
 type Member = {
@@ -85,12 +86,8 @@ export function TeamManagement({
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-50 text-red-700 text-xs rounded-lg p-2">{error}</div>
-      )}
-      {success && (
-        <div className="bg-green-50 text-green-700 text-xs rounded-lg p-2">{success}</div>
-      )}
+      <ErrorBanner message={error ?? ''} onDismiss={() => setError(null)} />
+      <SuccessBanner message={success ?? ''} onDismiss={() => setSuccess(null)} />
 
       {/* Invite form */}
       {showInviteForm && (

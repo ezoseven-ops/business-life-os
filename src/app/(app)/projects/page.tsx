@@ -29,7 +29,7 @@ export default async function ProjectsPage() {
         {projects.length === 0 ? (
           <EmptyState
             title="No projects yet"
-            description="Create your first project to start organizing."
+            description="Create a project to structure your work."
           />
         ) : (
           <div className="space-y-3 mt-4">

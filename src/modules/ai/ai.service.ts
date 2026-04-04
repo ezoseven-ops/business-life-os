@@ -11,10 +11,10 @@ export async function transcribeAudio(audioUrl: string): Promise<string> {
 
   const file = new File([audioBuffer], 'audio.webm', { type: 'audio/webm' })
 
+  // No language param — Whisper auto-detects language
   const transcription = await openai.audio.transcriptions.create({
     model: 'whisper-1',
     file,
-    language: 'en',
   })
 
   return transcription.text

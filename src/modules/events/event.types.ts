@@ -7,6 +7,7 @@ export const createEventSchema = z.object({
   endAt: z.coerce.date().optional(),
   allDay: z.boolean().default(false),
   location: z.string().max(500).optional(),
+  projectId: z.string().nullable().optional(),
 })
 
 export const updateEventSchema = z.object({
@@ -16,6 +17,7 @@ export const updateEventSchema = z.object({
   endAt: z.coerce.date().nullable().optional(),
   allDay: z.boolean().optional(),
   location: z.string().max(500).nullable().optional(),
+  projectId: z.string().nullable().optional(),
 })
 
 export type CreateEventInput = z.infer<typeof createEventSchema>

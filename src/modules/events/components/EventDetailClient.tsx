@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateEventAction, deleteEventAction } from '@/modules/events/event.actions'
+import { InlineError } from '@/components/ErrorStates'
 
 interface EventDetailClientProps {
   event: {
@@ -178,7 +179,7 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
             disabled={saving}
           />
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          <InlineError message={error ?? ''} />
 
           <div className="flex items-center justify-between pt-2">
             <button

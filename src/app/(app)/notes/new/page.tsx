@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
+import { InlineError } from '@/components/ErrorStates'
 import { createNoteAction } from '@/modules/notes/note.actions'
 
 export default function QuickCapturePage() {
@@ -71,7 +72,7 @@ export default function QuickCapturePage() {
           disabled={saving}
         />
         {error && (
-          <p className="text-sm text-red-500 text-center pt-2">{error}</p>
+          <div className="pt-2"><InlineError message={error} /></div>
         )}
       </div>
     </div>

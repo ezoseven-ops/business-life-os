@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  /* ─── Light theme (default for all pages) ─── */
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
   --color-primary-light: #eff6ff;
@@ -15,7 +16,30 @@
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-urgent: #ef4444;
+
+  /* ─── Command Center dark theme tokens ─── */
+  --color-cc-bg: #08080d;
+  --color-cc-surface: #111118;
+  --color-cc-surface-hover: #16161f;
+  --color-cc-surface-elevated: #1a1a24;
+  --color-cc-border: rgba(255, 255, 255, 0.06);
+  --color-cc-border-subtle: rgba(255, 255, 255, 0.03);
+  --color-cc-text: #f0f0f3;
+  --color-cc-text-secondary: #8b8b9e;
+  --color-cc-text-muted: #55556a;
+  --color-cc-text-dim: #3a3a4a;
+  --color-cc-accent: #6366f1;
+  --color-cc-fire: #ef4444;
+  --color-cc-fire-muted: rgba(239, 68, 68, 0.12);
+  --color-cc-risk: #f59e0b;
+  --color-cc-risk-muted: rgba(245, 158, 11, 0.12);
+  --color-cc-waste: #6b7280;
+  --color-cc-waste-muted: rgba(107, 114, 128, 0.12);
+  --color-cc-success: #10b981;
+
+  /* ─── Typography ─── */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
 }
 
 html {
@@ -42,7 +66,7 @@ body {
   overflow-y: auto;
 }
 
-/* Card shadows */
+/* ─── Light theme cards (Tasks, Projects, etc.) ─── */
 .card {
   background: white;
   border-radius: 16px;
@@ -56,6 +80,34 @@ body {
 .card-hover:active {
   transform: scale(0.98);
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* ─── Command Center dark cards ─── */
+.cc-card {
+  background: var(--color-cc-surface);
+  border-radius: 14px;
+  border: 1px solid var(--color-cc-border);
+}
+
+.cc-card-elevated {
+  background: var(--color-cc-surface-elevated);
+  border-radius: 14px;
+  border: 1px solid var(--color-cc-border);
+}
+
+.cc-card:hover,
+.cc-card-hover:hover {
+  background: var(--color-cc-surface-hover);
+}
+
+/* ─── Command Center zone separators ─── */
+.cc-zone {
+  padding-top: 20px;
+  padding-bottom: 4px;
+}
+
+.cc-zone + .cc-zone {
+  border-top: 1px solid var(--color-cc-border-subtle);
 }
 
 /* Smooth transitions */

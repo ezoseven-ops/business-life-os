@@ -5,7 +5,7 @@ import { safeAction, requireWorkspace, requireRole } from '@/lib/action-utils'
 import * as projectService from './project.service'
 import * as projectQueries from './project.queries'
 import { logActivity } from '@/modules/activity/activity.service'
-import { createProjectSchema, updateProjectSchema } from './project.types'
+import { createProjectSchema, updateProjectSchema, projectPhaseEnum } from './project.types'
 
 export async function getProjectsAction() {
   return safeAction(async () => {
@@ -54,5 +54,17 @@ export async function deleteProjectAction(id: string) {
     await projectService.deleteProject(id, session.workspaceId)
     await logActivity('DELETED', 'PROJECT', id, session.user.id)
     revalidatePath('/projects')
+  })
+}
+
+export async function updateProjectPhaseAction(id: string, phase: string) {
+  return safeAction(async () => {
+    const session = await requireRole('OWNER', 'TEAM')
+    const validated = projectPhaseEnum.parse(phase)
+    const project = await projectService.updateProject(id, { phase: validated } as any, session.workspaceId)
+    await logActivity('STATUS_CHANGED', 'PROJECT', project.id, session.user.id, { phase: validated })
+    revalidatePath(`/projects/${id}`)
+    revalidatePath('/projects')
+    return project
   })
 }

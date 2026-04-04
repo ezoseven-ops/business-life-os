@@ -4,12 +4,40 @@ import { getWorkspace } from '@/modules/workspace/workspace.service'
 import { getEnabledIntegrations } from '@/modules/integrations/integration.service'
 import { getWorkspaceMembers, getWorkspaceInvitations } from '@/modules/invitations/invitation.service'
 import { TeamManagement } from './TeamManagement'
+import { GoogleCalendarSettings } from './GoogleCalendarSettings'
+import { prisma } from '@/lib/prisma'
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   const session = await auth()
   if (!session?.user?.workspaceId) return null
 
   const isOwner = session.user.role === 'OWNER'
+  const params = await searchParams
+
+  // Check Google Calendar connection status from DB (no API call needed)
+  const oauthConfigured = !!(process.env.GOOGLE_CALENDAR_CLIENT_ID && process.env.GOOGLE_CALENDAR_CLIENT_SECRET)
+  const googleCalendarIntegration = await prisma.integration.findFirst({
+    where: {
+      workspaceId: session.user.workspaceId,
+      type: 'GOOGLE_CALENDAR' as any,
+      enabled: true,
+    },
+    select: { id: true, config: true },
+  })
+  const gcalConnected = !!(googleCalendarIntegration?.config as Record<string, any> | null)?.accessToken
+
+  // Parse callback query params
+  let callbackMessage: { type: 'success' | 'error'; text: string } | null = null
+  if (params.calendar_connected === 'true') {
+    callbackMessage = { type: 'success', text: 'Google Calendar connected successfully' }
+  } else if (params.calendar_error) {
+    const err = Array.isArray(params.calendar_error) ? params.calendar_error[0] : params.calendar_error
+    callbackMessage = { type: 'error', text: `Connection failed: ${err}` }
+  }
 
   const [workspace, integrations, members, invitations] = await Promise.all([
     getWorkspace(session.user.workspaceId),
@@ -57,7 +85,15 @@ export default async function SettingsPage() {
           />
         )}
 
-        {/* Integrations */}
+        {/* Google Calendar */}
+        <GoogleCalendarSettings
+          initialConnected={gcalConnected}
+          isOwner={isOwner}
+          oauthConfigured={oauthConfigured}
+          callbackMessage={callbackMessage}
+        />
+
+        {/* Other Integrations */}
         <section className="bg-surface rounded-xl border border-border p-4 space-y-3">
           <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">Integrations</h3>
           <div className="space-y-2">

@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { safeAction, requireWorkspace, requireRole } from '@/lib/action-utils'
+import { safeAction, requireRole } from '@/lib/action-utils'
 import * as peopleService from './people.service'
 import { logActivity } from '@/modules/activity/activity.service'
 import { createPersonSchema, updatePersonSchema } from './people.types'

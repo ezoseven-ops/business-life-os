@@ -71,7 +71,12 @@ class TelegramAdapter implements ChannelAdapter {
   }
 
   async validateWebhook(request: Request): Promise<boolean> {
-    if (!this.webhookSecret) return true
+    // In production, webhook secret is required for security
+    if (!this.webhookSecret) {
+      if (process.env.NODE_ENV === 'production') return false
+      // Allow in development without secret for testing convenience
+      return true
+    }
     const token = request.headers.get('x-telegram-bot-api-secret-token')
     return token === this.webhookSecret
   }

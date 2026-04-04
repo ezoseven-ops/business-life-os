@@ -12,7 +12,7 @@ export function Header({ title, backHref, action }: HeaderProps) {
       <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
         <div className="flex items-center gap-2">
           {backHref && (
-            <Link href={backHref} className="text-primary -ml-2 p-1.5 rounded-lg hover:bg-gray-50">
+            <Link href={backHref} className="text-primary -ml-1 p-2.5 rounded-lg hover:bg-gray-50 active:scale-[0.95]">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
               </svg>

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { MessageChannel, MessageDirection, MessageStatus } from '@prisma/client'
+import type { MessageChannel, MessageDirection } from '@prisma/client'
 
 // Normalized message format — all adapters convert to this
 export interface NormalizedMessage {

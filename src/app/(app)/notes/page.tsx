@@ -32,7 +32,7 @@ export default async function NotesPage() {
         {notes.length === 0 ? (
           <EmptyState
             title="No notes yet"
-            description="Capture your first idea."
+            description="Capture ideas, meeting notes, and voice memos."
             action={
               <Link href="/notes/new" className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold">
                 New note

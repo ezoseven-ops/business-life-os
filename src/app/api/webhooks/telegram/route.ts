@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { captureError } from '@/lib/sentry'
 import { getTelegramAdapter } from '@/modules/integrations/adapters/telegram.adapter'
 import { saveInboundMessage } from '@/modules/communications/comms.service'
 import { findPersonByTelegramId } from '@/modules/people/people.service'
 import { createNotification } from '@/modules/notifications/notification.service'
+import { webhookRateLimiter } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +19,12 @@ export async function POST(request: NextRequest) {
 
     if (!integration) {
       return NextResponse.json({ ok: true }) // Silently ignore
+    }
+
+    // Rate limit: 30/min per workspace
+    const rateCheck = webhookRateLimiter.check(integration.workspaceId)
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ ok: true }, { status: 429 })
     }
 
     const adapter = await getTelegramAdapter(integration.workspaceId)
@@ -55,6 +63,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('[Telegram Webhook Error]', error)
+    captureError(error, { module: 'webhook', action: 'telegram' })
     return NextResponse.json({ ok: true }) // Don't expose errors to Telegram
   }
 }

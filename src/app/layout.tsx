@@ -30,6 +30,11 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased" style={{ backgroundColor: '#f9fafb' }}>
         {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('[SW] Registration failed:',e.message)})}`,
+          }}
+        />
       </body>
     </html>
   )

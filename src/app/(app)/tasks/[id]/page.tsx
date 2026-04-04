@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth'
 import { Header } from '@/components/Header'
 import { getTaskById } from '@/modules/tasks/task.queries'
-import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 import { TaskDetailClient } from './TaskDetailClient'
 import { prisma } from '@/lib/prisma'

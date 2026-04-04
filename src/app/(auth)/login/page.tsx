@@ -19,6 +19,8 @@ export default async function LoginPage() {
           {/* Dev login — only in development */}
           {isDev && (
             <>
+              <p className="text-xs text-center text-text-secondary font-medium uppercase tracking-wider">Dev Login — pick a role</p>
+
               <form
                 action={async () => {
                   'use server'
@@ -32,7 +34,41 @@ export default async function LoginPage() {
                   type="submit"
                   className="w-full px-4 py-3 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
                 >
-                  Dev Login (Karol)
+                  OWNER — Karol
+                </button>
+              </form>
+
+              <form
+                action={async () => {
+                  'use server'
+                  await signIn('credentials', {
+                    email: 'anna@businesslifeos.com',
+                    redirectTo: '/',
+                  })
+                }}
+              >
+                <button
+                  type="submit"
+                  className="w-full px-4 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                >
+                  TEAM — Anna
+                </button>
+              </form>
+
+              <form
+                action={async () => {
+                  'use server'
+                  await signIn('credentials', {
+                    email: 'client@acme.com',
+                    redirectTo: '/portal',
+                  })
+                }}
+              >
+                <button
+                  type="submit"
+                  className="w-full px-4 py-3 rounded-xl bg-orange-600 text-white font-medium hover:bg-orange-700 transition-colors"
+                >
+                  CLIENT — John
                 </button>
               </form>
 

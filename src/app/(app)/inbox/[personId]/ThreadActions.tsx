@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { messageToTaskAction, sendReplyAction } from '@/modules/communications/comms.actions'
+import { InlineError } from '@/components/ErrorStates'
 
 interface ThreadActionsProps {
   personId: string
@@ -176,7 +177,7 @@ export function ThreadActions({
               </button>
             </div>
           </div>
-          {error && <p className="text-xs text-red-500">{error}</p>}
+          <InlineError message={error} />
         </div>
       </div>
     )
@@ -224,7 +225,7 @@ export function ThreadActions({
         >
           {saving ? 'Creating...' : 'Create Task'}
         </button>
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        <InlineError message={error} />
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { ZodError } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { captureError } from '@/lib/sentry'
 import type { UserRole } from '@prisma/client'
 
 export type ActionResult<T = unknown> =
@@ -20,6 +21,7 @@ export async function safeAction<T>(fn: () => Promise<T>): Promise<ActionResult<
       }
     }
     console.error('[Action Error]', error)
+    captureError(error, { module: 'action' })
     return { success: false, error: 'Something went wrong' }
   }
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
+import { InlineError } from '@/components/ErrorStates'
 import { createEventAction } from '@/modules/events/event.actions'
 
 function getDefaultDate() {
@@ -138,7 +139,7 @@ export default function NewEventPage() {
         />
 
         {error && (
-          <p className="text-sm text-red-500 text-center">{error}</p>
+          <InlineError message={error} />
         )}
       </div>
     </div>

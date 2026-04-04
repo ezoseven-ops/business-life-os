@@ -53,3 +53,10 @@ next-env.d.ts
 
 # PM2
 .pm2/
+
+# temporary / working artifacts
+/tmp/
+DELIVERY_PLAN.md
+SYSTEM_AUDIT.md
+MASTER_PROMPT.md
+DEPLOYMENT-READINESS-REPORT.md

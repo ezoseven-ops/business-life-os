@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import type { IntegrationType } from '@prisma/client'
+import type { IntegrationType, Prisma } from '@prisma/client'
 
 export async function getIntegration(workspaceId: string, type: IntegrationType) {
   return prisma.integration.findUnique({
@@ -18,8 +18,8 @@ export async function upsertIntegration(
     where: {
       workspaceId_type: { workspaceId, type },
     },
-    update: { config, enabled: true },
-    create: { workspaceId, type, config, enabled: true },
+    update: { config: config as Prisma.InputJsonValue, enabled: true },
+    create: { workspaceId, type, config: config as Prisma.InputJsonValue, enabled: true },
   })
 }
 

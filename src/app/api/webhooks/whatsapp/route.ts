@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { captureError } from '@/lib/sentry'
 import { getWhatsAppAdapter } from '@/modules/integrations/adapters/whatsapp.adapter'
 import { saveInboundMessage } from '@/modules/communications/comms.service'
 import { createNotification } from '@/modules/notifications/notification.service'
+import { webhookRateLimiter } from '@/lib/rate-limit'
 
 // Webhook verification (WhatsApp requires GET)
 export async function GET(request: NextRequest) {
@@ -30,6 +32,12 @@ export async function POST(request: NextRequest) {
 
     if (!integration) {
       return NextResponse.json({ ok: true })
+    }
+
+    // Rate limit: 30/min per workspace
+    const rateCheck = webhookRateLimiter.check(integration.workspaceId)
+    if (!rateCheck.allowed) {
+      return NextResponse.json({ ok: true }, { status: 429 })
     }
 
     const adapter = await getWhatsAppAdapter(integration.workspaceId)
@@ -62,6 +70,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('[WhatsApp Webhook Error]', error)
+    captureError(error, { module: 'webhook', action: 'whatsapp' })
     return NextResponse.json({ ok: true })
   }
 }

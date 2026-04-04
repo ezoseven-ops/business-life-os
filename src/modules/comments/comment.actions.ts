@@ -1,11 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { safeAction, requireWorkspace, requireRole } from '@/lib/action-utils'
+import { safeAction, requireRole } from '@/lib/action-utils'
 import { createComment, deleteComment, createCommentSchema } from './comment.service'
 import { logActivity } from '@/modules/activity/activity.service'
 import { createNotification } from '@/modules/notifications/notification.service'
 import { getTaskById } from '@/modules/tasks/task.queries'
+import { touchTaskActivity } from '@/modules/tasks/task.service'
 
 export async function addCommentAction(input: unknown) {
   return safeAction(async () => {
@@ -27,6 +28,8 @@ export async function addCommentAction(input: unknown) {
     const comment = await createComment(validated, session.user.id)
 
     if (validated.taskId) {
+      // Touch task activity — a comment is meaningful activity
+      await touchTaskActivity(validated.taskId)
       await logActivity('COMMENTED', 'TASK', validated.taskId, session.user.id)
 
       // Notify the task assignee or creator (not the commenter themselves)

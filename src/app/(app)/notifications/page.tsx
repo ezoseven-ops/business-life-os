@@ -11,14 +11,14 @@ export default async function NotificationsPage() {
   const notifications = await getNotifications(session.user.id)
 
   return (
-    <div>
+    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
       <Header title="Notifications" backHref="/" />
 
       <div className="px-4 py-4 max-w-lg mx-auto">
         {notifications.length === 0 ? (
           <EmptyState
             title="No notifications"
-            description="You're all caught up."
+            description="Nothing to review right now."
           />
         ) : (
           <div className="space-y-2">

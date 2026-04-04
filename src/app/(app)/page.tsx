@@ -1,120 +1,213 @@
 import { auth } from '@/lib/auth'
-import { Header } from '@/components/Header'
 import Link from 'next/link'
-import { getTodaysTasks } from '@/modules/tasks/task.queries'
-import { getRecentActivity } from '@/modules/activity/activity.service'
-import { getUnreadCount } from '@/modules/notifications/notification.service'
-import { getOwnerSignals, getStaleTasks, dispatchLazyNudges } from '@/modules/operational/staleness.service'
-import { formatRelativeTime } from '@/lib/utils'
+import { getFocusTasks } from '@/modules/command-center/focus.engine'
+import { getSignals, groupSignals } from '@/modules/command-center/signal.engine'
+import { getDailyBrief } from '@/modules/command-center/daily-brief.engine'
+import { getProjectOverview } from '@/modules/command-center/project-overview.query'
+import { getClosureBrief } from '@/modules/command-center/closure.engine'
+import { detectRhythm } from '@/modules/command-center/rhythm.engine'
 import { TaskCheckbox } from '@/modules/tasks/components/TaskCheckbox'
+import { CommandCenterInput } from '@/modules/agent/components/CommandCenterInput'
+import { RhythmTracker } from '@/modules/command-center/components/RhythmTracker'
 
-export default async function DashboardPage() {
+export default async function CommandCenter() {
   const session = await auth()
   if (!session?.user?.workspaceId) return null
 
-  const isOwner = session.user.role === 'OWNER'
-
-  const [tasks, activity, unreadCount, ownerSignals, staleTasks] = await Promise.all([
-    getTodaysTasks(session.user.workspaceId, session.user.id),
-    getRecentActivity(session.user.workspaceId, 10),
-    getUnreadCount(session.user.id),
-    isOwner ? getOwnerSignals(session.user.workspaceId) : null,
-    isOwner ? getStaleTasks(session.user.workspaceId) : null,
+  // Core data — these must succeed for the page to render
+  const [focusTasks, signals, projects] = await Promise.all([
+    getFocusTasks(session.user.workspaceId, session.user.id).catch(() => []),
+    getSignals(session.user.workspaceId).catch(() => []),
+    getProjectOverview(session.user.workspaceId).catch(() => []),
   ])
 
-  // Lazy nudge dispatch for owner (fire-and-forget, non-blocking)
-  if (isOwner) {
-    dispatchLazyNudges(session.user.workspaceId, session.user.id).catch(() => {})
+  const grouped = groupSignals(signals)
+
+  // Detect operating rhythm — OPEN / ACTIVE / CLOSURE
+  const rhythm = await detectRhythm(session.user.workspaceId, session.user.id)
+    .catch(() => ({
+      phase: 'ACTIVE' as const,
+      profile: 'default' as const,
+      inactivityMinutes: 0,
+      hasActivityToday: false,
+      completedToday: 0,
+      lastActivityAt: null,
+      manualClosure: false,
+    }))
+
+  // AI Daily Brief — rhythm-aware (graceful degradation built into getDailyBrief)
+  const brief = await getDailyBrief(
+    session.user.name ?? 'Founder',
+    focusTasks,
+    signals,
+    projects,
+    session.user.workspaceId,
+    rhythm.phase,
+  )
+
+  // Closure brief — only when rhythm engine says CLOSURE
+  let closureBrief = null
+  if (rhythm.phase === 'CLOSURE') {
+    closureBrief = await getClosureBrief(
+      session.user.workspaceId,
+      session.user.id,
+      focusTasks,
+      signals,
+    ).catch(() => null)
   }
 
-  const greeting = getGreeting()
-  const activeTasks = tasks.filter(t => t.status !== 'DONE')
-  const doneTasks = tasks.filter(t => t.status === 'DONE')
-
   return (
-    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
-      <Header
-        title="Home"
-        action={
-          <Link href="/notifications" className="relative p-2">
-            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+    <div className="min-h-dvh" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
+      {/* ── Header ── */}
+      <header
+        className="sticky top-0 z-40 backdrop-blur-xl"
+        style={{
+          backgroundColor: 'rgba(8, 8, 13, 0.85)',
+          borderBottom: '1px solid var(--color-cc-border-subtle)',
+        }}
+      >
+        <div className="flex items-center justify-between h-14 px-5 max-w-2xl mx-auto">
+          <h1
+            className="text-[15px] font-semibold tracking-tight"
+            style={{ color: 'var(--color-cc-text)', letterSpacing: '-0.01em' }}
+          >
+            Command Center
+          </h1>
+          <Link
+            href="/notifications"
+            className="p-3 -mr-3 rounded-xl transition-colors active:scale-[0.9]"
+            style={{ color: 'var(--color-cc-text-muted)' }}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
             </svg>
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
           </Link>
-        }
-      />
-
-      <div className="px-4 py-5 max-w-lg mx-auto space-y-6 pb-24">
-        {/* Greeting */}
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {greeting}, {session.user.name?.split(' ')[0] || 'there'}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {activeTasks.length > 0
-              ? `${activeTasks.length} task${activeTasks.length === 1 ? '' : 's'} to focus on today`
-              : "You're all clear today"}
-          </p>
         </div>
+      </header>
 
-        {/* Owner Signals */}
-        {isOwner && ownerSignals && (ownerSignals.overdueTasks > 0 || ownerSignals.waitingTasks > 0 || ownerSignals.unassignedTasks > 0) && (
-          <div className="grid grid-cols-3 gap-2">
-            {ownerSignals.overdueTasks > 0 && (
-              <div className="bg-red-50 rounded-xl p-3 text-center">
-                <p className="text-lg font-bold text-red-600">{ownerSignals.overdueTasks}</p>
-                <p className="text-[10px] font-medium text-red-500 uppercase">Overdue</p>
-              </div>
-            )}
-            {ownerSignals.waitingTasks > 0 && (
-              <div className="bg-amber-50 rounded-xl p-3 text-center">
-                <p className="text-lg font-bold text-amber-600">{ownerSignals.waitingTasks}</p>
-                <p className="text-[10px] font-medium text-amber-500 uppercase">Waiting</p>
-              </div>
-            )}
-            {ownerSignals.unassignedTasks > 0 && (
-              <div className="bg-gray-100 rounded-xl p-3 text-center">
-                <p className="text-lg font-bold text-gray-600">{ownerSignals.unassignedTasks}</p>
-                <p className="text-[10px] font-medium text-gray-500 uppercase">Unassigned</p>
-              </div>
-            )}
+      <div className="px-5 max-w-2xl mx-auto pb-28">
+
+        {/* ═══════════════════════════════════════════
+            ZONE 1: AI DAILY BRIEF
+            3 decision sentences — what matters, biggest risk, being ignored
+        ═══════════════════════════════════════════ */}
+        <section className="pt-8 pb-2">
+          <h2
+            className="text-2xl font-bold tracking-tight"
+            style={{ color: 'var(--color-cc-text)', letterSpacing: '-0.025em' }}
+          >
+            {brief.greeting}
+          </h2>
+
+          {/* What matters today */}
+          <div className="mt-4 space-y-2.5">
+            <BriefLine
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                </svg>
+              }
+              iconColor="var(--color-cc-accent)"
+              text={brief.whatMatters}
+              textColor="var(--color-cc-text)"
+            />
+
+            {/* Biggest risk */}
+            <BriefLine
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              }
+              iconColor="var(--color-cc-fire)"
+              text={brief.biggestRisk}
+              textColor="var(--color-cc-text-secondary)"
+            />
+
+            {/* Being ignored */}
+            <BriefLine
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              }
+              iconColor="var(--color-cc-risk)"
+              text={brief.beingIgnored}
+              textColor="var(--color-cc-text-muted)"
+            />
           </div>
-        )}
+        </section>
 
-        {/* Stale Tasks (Owner only) */}
-        {isOwner && staleTasks && staleTasks.length > 0 && (
-          <section>
-            <h3 className="text-sm font-bold text-red-600 mb-2">Needs Attention</h3>
-            <div className="space-y-2">
-              {staleTasks.slice(0, 5).map((task) => (
+        {/* ═══════════════════════════════════════════
+            ZONE 2: CAPTURE — chaos → structure
+            Always visible. The most important input surface.
+        ═══════════════════════════════════════════ */}
+        <section className="cc-zone">
+          <ZoneHeader title="Capture" />
+          <CommandCenterInput />
+        </section>
+
+        {/* ═══════════════════════════════════════════
+            ZONE 3: FOCUS — TOP 3 TASKS
+            Dominant section. "This is what I do now."
+        ═══════════════════════════════════════════ */}
+        {focusTasks.length > 0 && (
+          <section className="cc-zone">
+            <ZoneHeader title="Focus" count={focusTasks.length} />
+            <div className="space-y-2.5">
+              {focusTasks.map((task, i) => (
                 <Link
                   key={task.id}
                   href={`/tasks/${task.id}`}
-                  className={`block rounded-xl border p-3 ${
-                    task.stalenessLevel === 'critical'
-                      ? 'bg-red-50 border-red-200'
-                      : 'bg-amber-50 border-amber-200'
-                  }`}
+                  className="cc-card cc-card-hover block px-4 py-4"
                 >
-                  <div className="flex items-start justify-between">
-                    <p className="text-sm font-medium text-gray-900 flex-1">{task.title}</p>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                      task.stalenessLevel === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {task.stalenessLevel === 'critical' ? 'CRITICAL' : 'STALE'}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 mt-0.5">{task.stalenessReason}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] text-gray-400">{task.projectName}</span>
-                    {task.assigneeName && (
-                      <span className="text-[10px] text-gray-400">• {task.assigneeName}</span>
-                    )}
+                  <div className="flex items-start gap-3.5">
+                    <div className="pt-0.5" onClick={(e) => e.preventDefault()}>
+                      <TaskCheckbox taskId={task.id} status={task.status} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className="text-[11px] font-bold tabular-nums"
+                          style={{ color: 'var(--color-cc-text-dim)' }}
+                        >
+                          {i + 1}
+                        </span>
+                        <PriorityPill priority={task.priority} />
+                        <p
+                          className="text-[14px] font-medium truncate"
+                          style={{ color: 'var(--color-cc-text)' }}
+                        >
+                          {task.title}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span
+                          className="text-[12px]"
+                          style={{ color: 'var(--color-cc-text-muted)' }}
+                        >
+                          {task.projectName}
+                        </span>
+                        {task.ventureName && (
+                          <>
+                            <span style={{ color: 'var(--color-cc-text-dim)' }}>·</span>
+                            <span
+                              className="text-[12px]"
+                              style={{ color: 'var(--color-cc-text-dim)' }}
+                            >
+                              {task.ventureName}
+                            </span>
+                          </>
+                        )}
+                        {task.dueDate && (
+                          <>
+                            <span style={{ color: 'var(--color-cc-text-dim)' }}>·</span>
+                            <DueBadge dueDate={task.dueDate} />
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -122,142 +215,401 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Quick actions */}
-        <div className="grid grid-cols-4 gap-3">
-          <Link href="/tasks?new=1" className="card card-hover flex flex-col items-center gap-2.5 p-4">
-            <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-            </div>
-            <span className="text-xs font-semibold text-gray-700">Task</span>
-          </Link>
-          <Link href="/calendar/new" className="card card-hover flex flex-col items-center gap-2.5 p-4">
-            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-              </svg>
-            </div>
-            <span className="text-xs font-semibold text-gray-700">Event</span>
-          </Link>
-          <Link href="/notes/new" className="card card-hover flex flex-col items-center gap-2.5 p-4">
-            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
-              </svg>
-            </div>
-            <span className="text-xs font-semibold text-gray-700">Note</span>
-          </Link>
-          <Link href="/voice" className="card card-hover flex flex-col items-center gap-2.5 p-4">
-            <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-              </svg>
-            </div>
-            <span className="text-xs font-semibold text-gray-700">Voice</span>
-          </Link>
-        </div>
-
-        {/* Today's tasks */}
-        {activeTasks.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-bold text-gray-900">Today&apos;s Focus</h3>
-              <Link href="/tasks" className="text-sm font-medium text-primary">See all</Link>
-            </div>
-            <div className="space-y-2">
-              {activeTasks.slice(0, 5).map((task) => (
-                <div key={task.id} className="card flex items-center gap-3 px-4 py-3.5">
-                  <TaskCheckbox taskId={task.id} status={task.status} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{task.project.name}</p>
-                  </div>
-                  <PriorityBadge priority={task.priority} />
-                </div>
-              ))}
+        {/* ═══════════════════════════════════════════
+            ZONE 4: SIGNALS — the radar
+            CRITICAL = dangerous. RISK = urgent. WASTE = time drain.
+        ═══════════════════════════════════════════ */}
+        {signals.length > 0 && (
+          <section className="cc-zone">
+            <ZoneHeader title="Signals" count={signals.length} />
+            <div className="space-y-5">
+              {grouped.critical.length > 0 && (
+                <SignalGroup label="Critical" variant="fire" signals={grouped.critical} />
+              )}
+              {grouped.risk.length > 0 && (
+                <SignalGroup label="Risk" variant="risk" signals={grouped.risk} />
+              )}
+              {grouped.waste.length > 0 && (
+                <SignalGroup label="Waste" variant="waste" signals={grouped.waste} />
+              )}
             </div>
           </section>
         )}
 
-        {/* Done tasks */}
-        {doneTasks.length > 0 && (
-          <section>
-            <h3 className="text-sm font-semibold text-gray-400 mb-2">Completed today</h3>
+        {/* ═══════════════════════════════════════════
+            ZONE 5: PROJECTS — progress overview
+        ═══════════════════════════════════════════ */}
+        {projects.length > 0 && (
+          <section className="cc-zone">
+            <ZoneHeader title="Projects" count={projects.length} />
             <div className="space-y-1.5">
-              {doneTasks.slice(0, 3).map((task) => (
-                <div key={task.id} className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gray-50">
-                  <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-green-600" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <p className="text-sm text-gray-400 line-through truncate">{task.title}</p>
-                </div>
-              ))}
+              {projects.map((project) => {
+                const pct = project.taskCounts.total > 0
+                  ? Math.round((project.taskCounts.done / project.taskCounts.total) * 100)
+                  : 0
+                return (
+                  <Link
+                    key={project.id}
+                    href={`/projects/${project.id}`}
+                    className="cc-card cc-card-hover flex items-center gap-3 px-4 py-3"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="text-[10px] font-bold tracking-wide"
+                          style={{ color: 'var(--color-cc-text-dim)' }}
+                        >
+                          {project.projectPriority}
+                        </span>
+                        <p
+                          className="text-[13px] font-medium truncate"
+                          style={{ color: 'var(--color-cc-text-secondary)' }}
+                        >
+                          {project.name}
+                        </p>
+                        {project.ventureName && (
+                          <span
+                            className="text-[11px] truncate flex-shrink-0"
+                            style={{ color: 'var(--color-cc-text-dim)' }}
+                          >
+                            {project.ventureName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-16 h-1 rounded-full overflow-hidden"
+                          style={{ backgroundColor: 'var(--color-cc-border)' }}
+                        >
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: project.taskCounts.overdue > 0
+                                ? 'var(--color-cc-fire)'
+                                : pct === 100
+                                  ? 'var(--color-cc-success)'
+                                  : 'var(--color-cc-accent)',
+                            }}
+                          />
+                        </div>
+                        <span
+                          className="text-[11px] tabular-nums"
+                          style={{ color: 'var(--color-cc-text-muted)' }}
+                        >
+                          {project.taskCounts.done}/{project.taskCounts.total}
+                        </span>
+                      </div>
+                      {project.taskCounts.overdue > 0 && (
+                        <span
+                          className="text-[10px] font-medium"
+                          style={{ color: 'var(--color-cc-fire)' }}
+                        >
+                          {project.taskCounts.overdue} late
+                        </span>
+                      )}
+                      <ProjectStatusDot status={project.status} />
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </section>
         )}
 
-        {/* Recent activity */}
-        {activity.length > 0 && (
-          <section>
-            <h3 className="text-base font-bold text-gray-900 mb-3">Activity</h3>
-            <div className="space-y-3">
-              {activity.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-semibold text-gray-500">
-                      {item.user.name?.charAt(0)?.toUpperCase() || '?'}
+        {/* ═══════════════════════════════════════════
+            ZONE 6: EVENING CLOSURE (after 5pm only)
+            What was completed, what slipped, tomorrow prep
+        ═══════════════════════════════════════════ */}
+        {closureBrief && (
+          <section className="cc-zone">
+            <ZoneHeader title="Day Close" />
+            <div className="cc-card-elevated px-4 py-4 space-y-3">
+              {/* Stats row */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    style={{ color: 'var(--color-cc-success)' }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-[12px] font-medium" style={{ color: 'var(--color-cc-success)' }}>
+                    {closureBrief.completedToday} done
+                  </span>
+                </div>
+                {closureBrief.blockedCount > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      style={{ color: 'var(--color-cc-risk)' }}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                    </svg>
+                    <span className="text-[12px] font-medium" style={{ color: 'var(--color-cc-risk)' }}>
+                      {closureBrief.blockedCount} blocked
                     </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-600">
-                      <span className="font-semibold text-gray-900">{item.user.name || 'Someone'}</span>
-                      {' '}{formatAction(item.action)}{' '}
-                      a {item.entityType.toLowerCase().replace('_', ' ')}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(item.createdAt)}</p>
-                  </div>
-                </div>
-              ))}
+                )}
+              </div>
+
+              {/* AI closure lines */}
+              <div className="space-y-2">
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-cc-text-secondary)' }}>
+                  {closureBrief.closureSummary}
+                </p>
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-cc-text-muted)' }}>
+                  {closureBrief.slipped}
+                </p>
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-cc-accent)' }}>
+                  {closureBrief.tomorrowPrep}
+                </p>
+              </div>
             </div>
           </section>
+        )}
+
+        {/* ── CLOSE DAY (only in ACTIVE phase) + invisible heartbeat ── */}
+        <RhythmTracker phase={rhythm.phase} />
+
+        {/* ── RHYTHM PHASE INDICATOR ── */}
+        {rhythm.phase === 'OPEN' && (
+          <div
+            className="flex items-center gap-2 mt-6 px-3 py-2 rounded-lg"
+            style={{ backgroundColor: 'var(--color-cc-surface)' }}
+          >
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: 'var(--color-cc-accent)' }}
+            />
+            <span className="text-[12px]" style={{ color: 'var(--color-cc-text-dim)' }}>
+              Fresh session — {rhythm.inactivityMinutes >= 60
+                ? `${Math.round(rhythm.inactivityMinutes / 60)}h since last activity`
+                : 'first visit today'
+              }
+            </span>
+          </div>
+        )}
+
+        {/* ── EMPTY STATE ── */}
+        {focusTasks.length === 0 && signals.length === 0 && projects.length === 0 && (
+          <div className="text-center py-20">
+            <div
+              className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+              style={{ backgroundColor: 'var(--color-cc-surface-elevated)' }}
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                style={{ color: 'var(--color-cc-text-muted)' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
+            </div>
+            <p className="text-sm" style={{ color: 'var(--color-cc-text-muted)' }}>
+              No data yet. Use Capture above to drop your first thought.
+            </p>
+          </div>
         )}
       </div>
     </div>
   )
 }
 
-function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
-}
+// ─────────────────────────────────────────────
+// Sub-components — premium, token-driven
+// ─────────────────────────────────────────────
 
-function formatAction(action: string): string {
-  const map: Record<string, string> = {
-    CREATED: 'created',
-    UPDATED: 'updated',
-    DELETED: 'deleted',
-    COMMENTED: 'commented on',
-    STATUS_CHANGED: 'changed status of',
-    ASSIGNED: 'assigned',
-  }
-  return map[action] || action.toLowerCase()
-}
-
-function PriorityBadge({ priority }: { priority: string }) {
-  const styles: Record<string, string> = {
-    URGENT: 'bg-red-50 text-red-600',
-    HIGH: 'bg-orange-50 text-orange-600',
-    MEDIUM: 'bg-blue-50 text-blue-600',
-    LOW: 'bg-gray-100 text-gray-500',
-  }
+function BriefLine({
+  icon,
+  iconColor,
+  text,
+  textColor,
+}: {
+  icon: React.ReactNode
+  iconColor: string
+  text: string
+  textColor: string
+}) {
   return (
-    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${styles[priority] || styles.MEDIUM}`}>
+    <div className="flex items-start gap-3">
+      <div className="mt-0.5 flex-shrink-0" style={{ color: iconColor }}>
+        {icon}
+      </div>
+      <p className="text-[14px] leading-relaxed" style={{ color: textColor }}>
+        {text}
+      </p>
+    </div>
+  )
+}
+
+function ZoneHeader({ title, count }: { title: string; count?: number }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-3">
+      <h3
+        className="text-[11px] font-semibold uppercase tracking-widest"
+        style={{ color: 'var(--color-cc-text-muted)', letterSpacing: '0.1em' }}
+      >
+        {title}
+      </h3>
+      {count !== undefined && (
+        <span
+          className="text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded"
+          style={{
+            color: 'var(--color-cc-text-dim)',
+            backgroundColor: 'var(--color-cc-border)',
+          }}
+        >
+          {count}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function PriorityPill({ priority }: { priority: string }) {
+  const styles: Record<string, { bg: string; color: string }> = {
+    URGENT: { bg: 'var(--color-cc-fire-muted)', color: 'var(--color-cc-fire)' },
+    HIGH: { bg: 'rgba(249, 115, 22, 0.12)', color: '#f97316' },
+    MEDIUM: { bg: 'rgba(99, 102, 241, 0.10)', color: 'var(--color-cc-accent)' },
+    LOW: { bg: 'var(--color-cc-border)', color: 'var(--color-cc-text-muted)' },
+  }
+  const s = styles[priority] ?? styles.MEDIUM
+  return (
+    <span
+      className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded flex-shrink-0"
+      style={{ backgroundColor: s.bg, color: s.color }}
+    >
       {priority}
     </span>
+  )
+}
+
+function DueBadge({ dueDate }: { dueDate: Date }) {
+  const now = new Date()
+  const isOverdue = dueDate < now
+  const diffMs = dueDate.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  let label: string
+  if (isOverdue) {
+    label = `${Math.abs(diffDays)}d overdue`
+  } else if (diffDays === 0) {
+    label = 'Today'
+  } else if (diffDays === 1) {
+    label = 'Tomorrow'
+  } else {
+    label = `${diffDays}d`
+  }
+
+  const color = isOverdue
+    ? 'var(--color-cc-fire)'
+    : diffDays <= 1
+      ? 'var(--color-cc-risk)'
+      : 'var(--color-cc-text-muted)'
+
+  return (
+    <span className="text-[11px] font-medium" style={{ color }}>
+      {label}
+    </span>
+  )
+}
+
+function ProjectStatusDot({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    ACTIVE: 'var(--color-cc-success)',
+    PAUSED: 'var(--color-cc-risk)',
+    DONE: 'var(--color-cc-text-dim)',
+    ARCHIVED: 'var(--color-cc-text-dim)',
+  }
+  return (
+    <span
+      className="w-2 h-2 rounded-full flex-shrink-0"
+      style={{ backgroundColor: colors[status] ?? 'var(--color-cc-text-dim)' }}
+    />
+  )
+}
+
+function SignalGroup({
+  label,
+  variant,
+  signals,
+}: {
+  label: string
+  variant: 'fire' | 'risk' | 'waste'
+  signals: { id: string; title: string; description: string; projectName: string; taskId: string }[]
+}) {
+  const tokens = {
+    fire: {
+      labelBg: 'var(--color-cc-fire-muted)',
+      labelColor: 'var(--color-cc-fire)',
+      border: 'rgba(239, 68, 68, 0.15)',
+    },
+    risk: {
+      labelBg: 'var(--color-cc-risk-muted)',
+      labelColor: 'var(--color-cc-risk)',
+      border: 'rgba(245, 158, 11, 0.15)',
+    },
+    waste: {
+      labelBg: 'var(--color-cc-waste-muted)',
+      labelColor: 'var(--color-cc-waste)',
+      border: 'var(--color-cc-border)',
+    },
+  }
+  const t = tokens[variant]
+
+  return (
+    <div>
+      <span
+        className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded mb-2.5"
+        style={{ backgroundColor: t.labelBg, color: t.labelColor }}
+      >
+        {label} · {signals.length}
+      </span>
+      <div className="space-y-1.5">
+        {signals.slice(0, 5).map((signal) => (
+          <Link
+            key={signal.id}
+            href={`/tasks/${signal.taskId}`}
+            className="cc-card cc-card-hover block px-3.5 py-2.5"
+            style={{ borderColor: t.border }}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <p
+                className="text-[12px] font-medium truncate"
+                style={{ color: 'var(--color-cc-text-secondary)' }}
+              >
+                {signal.description}
+              </p>
+              <span
+                className="text-[10px] font-semibold flex-shrink-0"
+                style={{ color: t.labelColor }}
+              >
+                {signal.title}
+              </span>
+            </div>
+            <p
+              className="text-[11px] mt-0.5 truncate"
+              style={{ color: 'var(--color-cc-text-dim)' }}
+            >
+              {signal.projectName}
+            </p>
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }

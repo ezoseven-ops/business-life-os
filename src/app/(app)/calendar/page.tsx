@@ -62,7 +62,7 @@ export default async function CalendarPage() {
         {events.length === 0 ? (
           <EmptyState
             title="No upcoming events"
-            description="Add your first event to get started."
+            description="Schedule events or connect Google Calendar in Settings."
             action={
               <Link href="/calendar/new" className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold">
                 New event

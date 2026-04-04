@@ -59,7 +59,7 @@ export default async function TasksPage({
         {tasks.length === 0 ? (
           <EmptyState
             title="No tasks yet"
-            description="Tap + to create your first task."
+            description="Create a task to start organizing work."
           />
         ) : (
           <div className="space-y-6 mt-4">

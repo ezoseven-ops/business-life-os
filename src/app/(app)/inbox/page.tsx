@@ -19,11 +19,11 @@ export default async function InboxPage() {
       <div className="px-4 py-4 max-w-lg mx-auto pb-24">
         {!hasAnything ? (
           <EmptyState
-            title="Inbox empty"
-            description="Connect Telegram or WhatsApp in Settings, or add people to start conversations."
+            title="No messages yet"
+            description="Connect a messaging channel in Settings to get started."
             action={
-              <Link href="/people" className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold">
-                Add People
+              <Link href="/settings" className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold">
+                Settings
               </Link>
             }
           />

@@ -17,7 +17,7 @@ export default async function PeoplePage({
   const people = await getPeople(session.user.workspaceId)
 
   return (
-    <div>
+    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
       <Header
         title="People"
         action={
@@ -33,7 +33,7 @@ export default async function PeoplePage({
         {people.length === 0 ? (
           <EmptyState
             title="No contacts yet"
-            description="Add people you work with."
+            description="Add collaborators and team members."
           />
         ) : (
           <div className="space-y-2">

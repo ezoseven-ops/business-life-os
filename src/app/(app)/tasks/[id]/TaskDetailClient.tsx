@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateTaskAction } from '@/modules/tasks/task.actions'
+import { InlineError } from '@/components/ErrorStates'
 import { addCommentAction } from '@/modules/comments/comment.actions'
 import { formatRelativeTime } from '@/lib/utils'
 
@@ -121,7 +122,7 @@ export function TaskDetailClient({ task, users }: Props) {
         </div>
       )}
 
-      {error && <p className="text-sm text-red-500 px-1">{error}</p>}
+      <InlineError message={error} />
 
       {/* Status */}
       <div className="card p-4">

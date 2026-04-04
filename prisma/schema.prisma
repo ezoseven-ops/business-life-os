@@ -94,6 +94,7 @@ model Workspace {
 
   owner        User          @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   members      User[]
+  ventures     Venture[]
   projects     Project[]
   notes        Note[]
   events       Event[]
@@ -106,25 +107,69 @@ model Workspace {
   @@index([slug])
 }
 
-// ─── PROJECTS & TASKS ───
+// ─── VENTURES ───
 
-model Project {
+model Venture {
   id          String        @id @default(cuid())
   name        String
-  description String?
-  status      ProjectStatus @default(ACTIVE)
+  priority    Int           @default(3) // 1 (highest) to 5 (lowest)
+  status      VentureStatus @default(ACTIVE)
   workspaceId String
-  ownerId     String
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  projects  Project[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, status])
+}
+
+enum VentureStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+// ─── PROJECTS & TASKS ───
+
+model Project {
+  id              String            @id @default(cuid())
+  name            String
+  description     String?
+  status          ProjectStatus     @default(ACTIVE)
+  phase           ProjectPhase      @default(PLANNING)
+  projectPriority ProjectPriority   @default(P2)
+  workspaceId     String
+  ownerId         String
+  ventureId       String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
   workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  venture        Venture?        @relation(fields: [ventureId], references: [id])
   tasks          Task[]
   notes          Note[]
+  events         Event[]
   projectMembers ProjectMember[]
 
   @@index([workspaceId])
   @@index([workspaceId, status])
+  @@index([ventureId])
+}
+
+enum ProjectPriority {
+  P0
+  P1
+  P2
+  P3
+}
+
+enum ProjectPhase {
+  PLANNING
+  EXECUTION
+  REVIEW
+  COMPLETE
 }
 
 enum ProjectStatus {
@@ -135,12 +180,13 @@ enum ProjectStatus {
 }
 
 model Task {
-  id              String       @id @default(cuid())
-  title           String
-  description     String?
-  status          TaskStatus   @default(TODO)
-  priority        TaskPriority @default(MEDIUM)
-  dueDate         DateTime?
+  id               String       @id @default(cuid())
+  title            String
+  description      String?
+  status           TaskStatus   @default(TODO)
+  priority         TaskPriority @default(MEDIUM)
+  dueDate          DateTime?
+  lastActivityAt   DateTime     @default(now())
   calendarEventId  String?
   sourceMessageId  String?
   projectId        String
@@ -266,16 +312,19 @@ model Event {
   location    String?
   workspaceId String
   creatorId   String
+  projectId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   workspace  Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   creator    User            @relation(fields: [creatorId], references: [id])
+  project    Project?        @relation(fields: [projectId], references: [id])
   attendees  EventAttendee[]
 
   @@index([workspaceId])
   @@index([workspaceId, startAt])
   @@index([creatorId])
+  @@index([projectId])
 }
 
 // ─── COMMENTS & FILES ───
@@ -434,6 +483,7 @@ enum IntegrationType {
   TELEGRAM
   WHATSAPP
   APPLE_CALENDAR
+  GOOGLE_CALENDAR
 }
 
 // ─── PROJECT MEMBERS ───
@@ -545,4 +595,40 @@ enum AiJobStatus {
   PROCESSING
   DONE
   FAILED
+}
+
+// ─── AGENT SESSIONS ───
+
+model AgentSession {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String
+  sessionData Json     // AgentSessionData: currentProject, currentEntity, actionHistory, unresolvedItems
+  expiresAt   DateTime
+  expired     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([workspaceId, userId])
+  @@index([expiresAt])
+  @@index([expired])
+}
+
+// ─── CALENDAR SYNC ───
+
+model CalendarSyncMap {
+  id         String   @id @default(cuid())
+  eventId    String
+  externalId String
+  provider   String   // GOOGLE_CALENDAR or APPLE_CALENDAR
+  syncStatus String   @default("pending") // pending | success | failed
+  lastSyncAt DateTime @default(now())
+  syncError  String?
+  retryCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([eventId, provider])
+  @@index([externalId, provider])
+  @@index([syncStatus])
 }

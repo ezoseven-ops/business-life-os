@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { acceptInvitationAction } from '@/modules/invitations/invitation.actions'
+import { ErrorBanner } from '@/components/ErrorStates'
 import type { UserRole } from '@prisma/client'
 
 export function InviteAcceptClient({
@@ -55,11 +56,7 @@ export function InviteAcceptClient({
         <p className="text-sm font-semibold text-gray-900 mt-0.5">{roleLabel}</p>
       </div>
 
-      {error && (
-        <div className="bg-red-50 text-red-700 text-sm rounded-xl p-3 text-center">
-          {error}
-        </div>
-      )}
+      <ErrorBanner message={error ?? ''} />
 
       <button
         onClick={handleAccept}

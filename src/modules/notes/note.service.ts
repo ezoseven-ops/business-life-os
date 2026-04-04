@@ -15,14 +15,20 @@ export async function createNote(
   })
 }
 
-export async function updateNote(id: string, input: UpdateNoteInput) {
+export async function updateNote(id: string, input: UpdateNoteInput, workspaceId: string) {
+  // Verify the note belongs to this workspace before updating
+  const existing = await prisma.note.findFirst({ where: { id, workspaceId } })
+  if (!existing) throw new Error('Note not found')
   return prisma.note.update({
     where: { id },
     data: input,
   })
 }
 
-export async function deleteNote(id: string) {
+export async function deleteNote(id: string, workspaceId: string) {
+  // Verify the note belongs to this workspace before deleting
+  const existing = await prisma.note.findFirst({ where: { id, workspaceId } })
+  if (!existing) throw new Error('Note not found')
   return prisma.note.delete({ where: { id } })
 }
 

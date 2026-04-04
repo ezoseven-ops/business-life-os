@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createProjectAction } from '@/modules/projects/project.actions'
+import { InlineError } from '@/components/ErrorStates'
 
 export function AddProjectForm({ onCancel }: { onCancel: () => void }) {
   const router = useRouter()
@@ -53,17 +54,15 @@ export function AddProjectForm({ onCancel }: { onCancel: () => void }) {
         className="w-full text-sm bg-transparent outline-none placeholder:text-gray-400"
         disabled={saving}
       />
-      {error && (
-        <p className="text-xs text-red-500">{error}</p>
-      )}
+      <InlineError message={error} />
       <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onCancel} disabled={saving} className="text-xs text-gray-400 font-medium px-3 py-1.5">
+        <button type="button" onClick={onCancel} disabled={saving} className="text-xs text-gray-400 font-medium px-3 py-2">
           Cancel
         </button>
         <button
           type="submit"
           disabled={!name.trim() || saving}
-          className="text-xs font-semibold text-white bg-primary px-4 py-1.5 rounded-lg disabled:opacity-40"
+          className="text-xs font-semibold text-white bg-primary px-4 py-2 rounded-xl disabled:opacity-40"
         >
           {saving ? '...' : 'Create'}
         </button>

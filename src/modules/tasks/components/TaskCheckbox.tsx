@@ -32,7 +32,7 @@ export function TaskCheckbox({ taskId, status }: { taskId: string; status: strin
       className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
         isDone
           ? 'bg-green-500 border-green-500'
-          : 'border-gray-300 hover:border-primary active:scale-90'
+          : 'border-zinc-600 hover:border-blue-500 active:scale-90'
       } ${loading ? 'opacity-50' : ''}`}
     >
       {isDone && (

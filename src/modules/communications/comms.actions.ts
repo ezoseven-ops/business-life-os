@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { safeAction, requireWorkspace, requireRole } from '@/lib/action-utils'
+import { safeAction, requireRole } from '@/lib/action-utils'
 import * as commsService from './comms.service'
 import { prisma } from '@/lib/prisma'
 import { logActivity } from '@/modules/activity/activity.service'

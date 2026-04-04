@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import type { ActivityAction, EntityType } from '@prisma/client'
+import type { ActivityAction, EntityType, Prisma } from '@prisma/client'
 
 export async function logActivity(
   action: ActivityAction,
@@ -14,7 +14,7 @@ export async function logActivity(
       entityType,
       entityId,
       userId,
-      metadata: metadata ?? undefined,
+      metadata: (metadata ?? undefined) as Prisma.InputJsonValue | undefined,
     },
   })
 }

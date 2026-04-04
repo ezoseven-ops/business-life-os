@@ -1,6 +1,8 @@
 import { auth } from '@/lib/auth'
 import { Header } from '@/components/Header'
 import { getPersonById } from '@/modules/people/people.service'
+import { getCollaboratorProfile } from '@/modules/people/collaborator.service'
+import { CollaboratorProfileCard } from '@/modules/people/components/CollaboratorProfileCard'
 import { formatRelativeTime } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -16,6 +18,8 @@ export default async function PersonDetailPage({
   const { id } = await params
   const person = await getPersonById(id, session.user.workspaceId!)
   if (!person) return notFound()
+
+  const collaboratorProfile = await getCollaboratorProfile(id)
 
   return (
     <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
@@ -73,6 +77,13 @@ export default async function PersonDetailPage({
             )}
           </div>
         </div>
+
+        {/* Collaborator profile */}
+        <CollaboratorProfileCard
+          personId={person.id}
+          personName={person.name}
+          initialProfile={collaboratorProfile}
+        />
 
         {/* Quick actions */}
         <div className="flex gap-2">

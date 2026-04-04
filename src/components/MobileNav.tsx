@@ -59,6 +59,9 @@ export function MobileNav() {
   const pathname = usePathname()
   const [showMenu, setShowMenu] = useState(false)
 
+  // Command Center (/) uses dark theme — nav adapts
+  const isDark = pathname === '/'
+
   return (
     <>
       {/* Overlay + Quick Action Menu */}
@@ -69,62 +72,90 @@ export function MobileNav() {
             <Link
               href="/calendar/new"
               onClick={() => setShowMenu(false)}
-              className="flex items-center gap-3 bg-white rounded-2xl px-5 py-3.5 shadow-xl min-w-[180px]"
+              className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 shadow-xl min-w-[180px] ${
+                isDark ? 'bg-[#1a1a24] border border-white/6' : 'bg-white'
+              }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                isDark ? 'bg-indigo-500/10' : 'bg-indigo-50'
+              }`}>
                 <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                 </svg>
               </div>
-              <span className="font-semibold text-sm">New Event</span>
+              <span className={`font-semibold text-sm ${isDark ? 'text-zinc-100' : ''}`}>New Event</span>
             </Link>
             <Link
               href="/tasks?new=1"
               onClick={() => setShowMenu(false)}
-              className="flex items-center gap-3 bg-white rounded-2xl px-5 py-3.5 shadow-xl min-w-[180px]"
+              className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 shadow-xl min-w-[180px] ${
+                isDark ? 'bg-[#1a1a24] border border-white/6' : 'bg-white'
+              }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                isDark ? 'bg-blue-500/10' : 'bg-blue-50'
+              }`}>
                 <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </div>
-              <span className="font-semibold text-sm">New Task</span>
+              <span className={`font-semibold text-sm ${isDark ? 'text-zinc-100' : ''}`}>New Task</span>
             </Link>
             <Link
               href="/notes/new"
               onClick={() => setShowMenu(false)}
-              className="flex items-center gap-3 bg-white rounded-2xl px-5 py-3.5 shadow-xl min-w-[180px]"
+              className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 shadow-xl min-w-[180px] ${
+                isDark ? 'bg-[#1a1a24] border border-white/6' : 'bg-white'
+              }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                isDark ? 'bg-amber-500/10' : 'bg-amber-50'
+              }`}>
                 <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
                 </svg>
               </div>
-              <span className="font-semibold text-sm">Quick Note</span>
+              <span className={`font-semibold text-sm ${isDark ? 'text-zinc-100' : ''}`}>Quick Note</span>
             </Link>
             <Link
               href="/voice"
               onClick={() => setShowMenu(false)}
-              className="flex items-center gap-3 bg-white rounded-2xl px-5 py-3.5 shadow-xl min-w-[180px]"
+              className={`flex items-center gap-3 rounded-2xl px-5 py-3.5 shadow-xl min-w-[180px] ${
+                isDark ? 'bg-[#1a1a24] border border-white/6' : 'bg-white'
+              }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                isDark ? 'bg-red-500/10' : 'bg-red-50'
+              }`}>
                 <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
                 </svg>
               </div>
-              <span className="font-semibold text-sm">Voice Note</span>
+              <span className={`font-semibold text-sm ${isDark ? 'text-zinc-100' : ''}`}>Voice Note</span>
             </Link>
           </div>
         </div>
       )}
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-200/60 safe-bottom z-40">
+      <nav className={`fixed bottom-0 left-0 right-0 backdrop-blur-xl safe-bottom z-40 ${
+        isDark
+          ? 'bg-[#08080d]/90 border-t border-white/6'
+          : 'bg-white/90 border-t border-gray-200/60'
+      }`}>
         <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
           {navItems.slice(0, 2).map((item) => {
             const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
             return (
-              <Link key={item.href} href={item.href} className={`flex flex-col items-center justify-center gap-0.5 w-16 py-1 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center gap-0.5 w-16 py-1 ${
+                  isActive
+                    ? isDark ? 'text-indigo-400' : 'text-primary'
+                    : isDark ? 'text-zinc-600' : 'text-gray-400'
+                }`}
+              >
                 {item.icon(isActive)}
                 <span className="text-[10px] font-medium">{item.label}</span>
               </Link>
@@ -134,10 +165,12 @@ export function MobileNav() {
           {/* FAB Button */}
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className={`flex items-center justify-center w-14 h-14 -mt-5 rounded-2xl shadow-lg shadow-primary/25 transition-all duration-200 ${
+            className={`flex items-center justify-center w-14 h-14 -mt-5 rounded-2xl shadow-lg transition-all duration-200 ${
               showMenu
                 ? 'bg-gray-800 rotate-45'
-                : 'bg-primary hover:bg-primary-hover'
+                : isDark
+                  ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/25'
+                  : 'bg-primary hover:bg-primary-hover shadow-primary/25'
             }`}
           >
             <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
@@ -148,7 +181,15 @@ export function MobileNav() {
           {navItems.slice(2).map((item) => {
             const isActive = pathname.startsWith(item.href)
             return (
-              <Link key={item.href} href={item.href} className={`flex flex-col items-center justify-center gap-0.5 w-16 py-1 ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center gap-0.5 w-16 py-1 ${
+                  isActive
+                    ? isDark ? 'text-indigo-400' : 'text-primary'
+                    : isDark ? 'text-zinc-600' : 'text-gray-400'
+                }`}
+              >
                 {item.icon(isActive)}
                 <span className="text-[10px] font-medium">{item.label}</span>
               </Link>

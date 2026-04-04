@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateNoteAction, deleteNoteAction } from '@/modules/notes/note.actions'
+import { InlineError } from '@/components/ErrorStates'
 import { formatRelativeTime } from '@/lib/utils'
 
 interface NoteDetailClientProps {
@@ -122,7 +123,7 @@ export function NoteDetailClient({ note }: NoteDetailClientProps) {
             className="w-full text-base leading-relaxed bg-transparent outline-none resize-none placeholder:text-gray-300"
             disabled={saving}
           />
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          <InlineError message={error} />
           <div className="flex items-center justify-between pt-2">
             <button
               onClick={handleDelete}

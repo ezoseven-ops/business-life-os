@@ -56,18 +56,27 @@ if (process.env.NODE_ENV === 'development') {
 
 const config: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
-  session: { strategy: 'database' },
+  session: { strategy: 'jwt' },
+  trustHost: true,
   providers,
   pages: {
     signIn: '/login',
   },
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+        token.role = (user as { role?: string }).role
+        token.workspaceId = (user as { workspaceId?: string | null }).workspaceId ?? null
+      }
+      return token
+    },
+    async session({ session, token }) {
       if (session.user) {
-        ;(session.user as { id?: string; role?: string; workspaceId?: string | null }).id = user.id
-        ;(session.user as { id?: string; role?: string; workspaceId?: string | null }).role = (user as { role?: string }).role
+        ;(session.user as { id?: string; role?: string; workspaceId?: string | null }).id = token.id as string
+        ;(session.user as { id?: string; role?: string; workspaceId?: string | null }).role = token.role as string
         ;(session.user as { id?: string; role?: string; workspaceId?: string | null }).workspaceId =
-          (user as { workspaceId?: string | null }).workspaceId ?? null
+          (token.workspaceId as string | null) ?? null
       }
       return session
     },

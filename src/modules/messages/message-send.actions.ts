@@ -45,7 +45,7 @@ export async function sendMessageDraftAction(
           metadata: {
             channel: result.channel,
             recipientName: result.recipientName,
-          } as any,
+          },
         },
       })
 

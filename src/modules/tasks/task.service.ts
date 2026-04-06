@@ -6,9 +6,8 @@ export async function createTask(input: CreateTaskInput, creatorId: string) {
     data: {
       ...input,
       creatorId,
-      // PRISMA_SCHEMA_FIELD: lastActivityAt exists in schema — run `prisma generate`
       lastActivityAt: new Date(),
-    } as any,
+    },
   })
 }
 
@@ -17,9 +16,8 @@ export async function updateTask(id: string, input: UpdateTaskInput) {
     where: { id },
     data: {
       ...input,
-      // PRISMA_SCHEMA_FIELD
       lastActivityAt: new Date(),
-    } as any,
+    },
   })
 }
 
@@ -30,8 +28,7 @@ export async function updateTask(id: string, input: UpdateTaskInput) {
 export async function touchTaskActivity(taskId: string) {
   return prisma.task.update({
     where: { id: taskId },
-    // PRISMA_SCHEMA_FIELD
-    data: { lastActivityAt: new Date() } as any,
+    data: { lastActivityAt: new Date() },
   })
 }
 

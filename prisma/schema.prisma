@@ -292,13 +292,48 @@ model Person {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user      User?     @relation("PersonUser", fields: [userId], references: [id])
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  messages  Message[]
+  user                User?                @relation("PersonUser", fields: [userId], references: [id])
+  workspace           Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  messages            Message[]
+  collaboratorProfile CollaboratorProfile?
 
   @@index([workspaceId])
   @@index([telegramId])
   @@index([whatsappId])
+}
+
+// ─── COLLABORATOR PROFILES ───
+
+model CollaboratorProfile {
+  id               String           @id @default(cuid())
+  personId         String           @unique
+  role             String?
+  skills           String[]         @default([])
+  strengths        String[]         @default([])
+  availability     Availability     @default(UNKNOWN)
+  reliabilityScore Int              @default(50)
+  timezone         String?
+  preferredChannel PreferredChannel?
+  lastProfileUpdate DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+}
+
+enum Availability {
+  FULL_TIME
+  PART_TIME
+  CONTRACTOR
+  OCCASIONAL
+  UNKNOWN
+}
+
+enum PreferredChannel {
+  TELEGRAM
+  WHATSAPP
+  EMAIL
+  INTERNAL
 }
 
 // ─── EVENTS ───
@@ -439,7 +474,7 @@ model Message {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
-  person    Person?   @relation(fields: [personId], references: [id])
+  person    Person?   @relation(fields: [personId], references: [id], onDelete: SetNull)
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   tasks     Task[]
 
@@ -618,18 +653,29 @@ model AgentSession {
 // ─── CALENDAR SYNC ───
 
 model CalendarSyncMap {
-  id         String   @id @default(cuid())
+  id         String           @id @default(cuid())
   eventId    String
   externalId String
-  provider   String   // GOOGLE_CALENDAR or APPLE_CALENDAR
-  syncStatus String   @default("pending") // pending | success | failed
-  lastSyncAt DateTime @default(now())
+  provider   CalendarProvider
+  syncStatus SyncStatus       @default(PENDING)
+  lastSyncAt DateTime         @default(now())
   syncError  String?
-  retryCount Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  retryCount Int              @default(0)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   @@unique([eventId, provider])
   @@index([externalId, provider])
   @@index([syncStatus])
+}
+
+enum CalendarProvider {
+  GOOGLE_CALENDAR
+  APPLE_CALENDAR
+}
+
+enum SyncStatus {
+  PENDING
+  SUCCESS
+  FAILED
 }

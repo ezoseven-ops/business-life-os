@@ -100,13 +100,17 @@ export async function acceptInvitation(token: string, userId: string) {
   })
 
   // Add user to workspace with the specified role
-  await prisma.user.update({
+  const acceptedUser = await prisma.user.update({
     where: { id: userId },
     data: {
       workspaceId: invitation.workspaceId,
       role: invitation.role,
     },
   })
+
+  // Ensure this User has a linked Person record in the workspace.
+  // Find by userId first (already linked), then by email (unlinked match), then create.
+  await ensurePersonForUser(acceptedUser.id, acceptedUser.email, acceptedUser.name, invitation.workspaceId)
 
   // If CLIENT role, add ProjectMember records for all active projects
   // (In MVP, clients get added to all active projects; owner can adjust later)
@@ -200,5 +204,67 @@ export async function removeMember(userId: string, workspaceId: string) {
   return prisma.user.update({
     where: { id: userId },
     data: { workspaceId: null, role: 'TEAM' },
+  })
+}
+
+// ─── Person ↔ User linking ───
+
+/**
+ * Ensure a User has a corresponding Person record in the workspace.
+ *
+ * Resolution order:
+ *   1. Person already linked via userId → done (no-op)
+ *   2. Unlinked Person with matching email in same workspace → link it
+ *   3. No match → create a new Person and link it
+ *
+ * Guards:
+ *   - Person.userId is @unique in the schema, so Prisma rejects double-linking
+ *   - Only matches Persons with userId: null to avoid stealing another User's Person
+ *   - Uses email + workspaceId for matching (not name, which is ambiguous)
+ *
+ * Exported for use by the backfill migration script.
+ */
+export async function ensurePersonForUser(
+  userId: string,
+  email: string,
+  name: string | null,
+  workspaceId: string,
+): Promise<void> {
+  // 1. Already linked? Nothing to do.
+  const existingLinked = await prisma.person.findUnique({
+    where: { userId },
+    select: { id: true },
+  })
+  if (existingLinked) return
+
+  // 2. Unlinked Person with matching email in this workspace? Link it.
+  if (email) {
+    const emailMatch = await prisma.person.findFirst({
+      where: {
+        workspaceId,
+        email,
+        userId: null, // only unlinked Persons
+      },
+      select: { id: true },
+    })
+
+    if (emailMatch) {
+      await prisma.person.update({
+        where: { id: emailMatch.id },
+        data: { userId },
+      })
+      return
+    }
+  }
+
+  // 3. No match — create a new Person linked to this User.
+  const displayName = name || email.split('@')[0]
+  await prisma.person.create({
+    data: {
+      name: displayName,
+      email,
+      workspaceId,
+      userId,
+    },
   })
 }

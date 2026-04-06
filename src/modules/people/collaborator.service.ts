@@ -6,7 +6,6 @@ import {
   type AssigneeSuggestion,
   type CapturedCollaborator,
   EMPTY_PROFILE,
-  collaboratorProfileSchema,
   capturedCollaboratorSchema,
 } from './collaborator.types'
 
@@ -16,38 +15,40 @@ import {
 // Manages collaborator profiles (skills, strengths, availability).
 // Provides AI-powered assignee suggestions for tasks.
 // Extracts profiles from natural language (voice capture).
+//
+// Profiles are stored in the CollaboratorProfile table (1:1 with Person).
 // ─────────────────────────────────────────────
 
 /**
  * Get the collaborator profile for a person.
- * Profile is stored as structured JSON in Person.notes field.
+ * Returns data from the CollaboratorProfile table.
  * Falls back to empty profile if not set.
  */
 export async function getCollaboratorProfile(personId: string): Promise<CollaboratorProfile> {
-  const person = await prisma.person.findUnique({
-    where: { id: personId },
-    select: { notes: true },
+  const profile = await prisma.collaboratorProfile.findUnique({
+    where: { personId },
   })
 
-  if (!person?.notes) return { ...EMPTY_PROFILE }
+  if (!profile) return { ...EMPTY_PROFILE }
 
-  try {
-    // Try to parse JSON profile from notes
-    const parsed = JSON.parse(person.notes)
-    if (parsed._collaboratorProfile) {
-      return collaboratorProfileSchema.parse(parsed._collaboratorProfile)
-    }
-  } catch {
-    // Notes are plain text — no profile yet
+  return {
+    role: profile.role,
+    skills: profile.skills,
+    strengths: profile.strengths,
+    availability: profile.availability,
+    reliabilityScore: profile.reliabilityScore,
+    timezone: profile.timezone,
+    preferredChannel: profile.preferredChannel
+      ? profile.preferredChannel.toLowerCase() as CollaboratorProfile['preferredChannel']
+      : null,
+    lastProfileUpdate: profile.lastProfileUpdate?.toISOString() ?? null,
   }
-
-  return { ...EMPTY_PROFILE }
 }
 
 /**
  * Update a collaborator's profile.
  * Merges with existing profile — only updates provided fields.
- * Stored as JSON within Person.notes (preserves existing text notes).
+ * Uses upsert on the CollaboratorProfile table.
  */
 export async function updateCollaboratorProfile(
   input: UpdateCollaboratorInput,
@@ -55,43 +56,70 @@ export async function updateCollaboratorProfile(
 ): Promise<CollaboratorProfile> {
   const person = await prisma.person.findFirst({
     where: { id: input.personId, workspaceId },
-    select: { id: true, notes: true },
+    select: { id: true },
   })
   if (!person) throw new Error('Person not found')
 
-  // Get existing profile
+  // Get existing profile for merge
   const existing = await getCollaboratorProfile(input.personId)
 
   // Merge updates
-  const updated: CollaboratorProfile = {
-    ...existing,
-    ...(input.role !== undefined && { role: input.role }),
-    ...(input.skills !== undefined && { skills: input.skills }),
-    ...(input.strengths !== undefined && { strengths: input.strengths }),
-    ...(input.availability !== undefined && { availability: input.availability }),
-    ...(input.reliabilityScore !== undefined && { reliabilityScore: input.reliabilityScore }),
-    ...(input.timezone !== undefined && { timezone: input.timezone }),
-    ...(input.preferredChannel !== undefined && { preferredChannel: input.preferredChannel }),
-    lastProfileUpdate: new Date().toISOString(),
+  const merged = {
+    role: input.role !== undefined ? input.role : existing.role,
+    skills: input.skills !== undefined ? input.skills : existing.skills,
+    strengths: input.strengths !== undefined ? input.strengths : existing.strengths,
+    availability: input.availability !== undefined ? input.availability : existing.availability,
+    reliabilityScore: input.reliabilityScore !== undefined ? input.reliabilityScore : existing.reliabilityScore,
+    timezone: input.timezone !== undefined ? input.timezone : existing.timezone,
+    preferredChannel: input.preferredChannel !== undefined ? input.preferredChannel : existing.preferredChannel,
   }
 
-  // Store as JSON in notes, preserving any existing text
-  let notesData: Record<string, any> = {}
-  try {
-    if (person.notes) notesData = JSON.parse(person.notes)
-  } catch {
-    // If existing notes are plain text, preserve them
-    if (person.notes) notesData._plainNotes = person.notes
+  // Map preferredChannel from lowercase to enum
+  const channelMap: Record<string, 'TELEGRAM' | 'WHATSAPP' | 'EMAIL' | 'INTERNAL'> = {
+    telegram: 'TELEGRAM',
+    whatsapp: 'WHATSAPP',
+    email: 'EMAIL',
+    internal: 'INTERNAL',
   }
 
-  notesData._collaboratorProfile = updated
+  const dbChannel = merged.preferredChannel
+    ? channelMap[merged.preferredChannel] ?? null
+    : null
 
-  await prisma.person.update({
-    where: { id: input.personId },
-    data: { notes: JSON.stringify(notesData) },
+  // Map availability to enum
+  const dbAvailability = merged.availability ?? 'UNKNOWN'
+
+  const now = new Date()
+
+  await prisma.collaboratorProfile.upsert({
+    where: { personId: input.personId },
+    update: {
+      role: merged.role,
+      skills: merged.skills,
+      strengths: merged.strengths,
+      availability: dbAvailability as any, // Prisma enum
+      reliabilityScore: merged.reliabilityScore,
+      timezone: merged.timezone,
+      preferredChannel: dbChannel as any, // Prisma enum
+      lastProfileUpdate: now,
+    },
+    create: {
+      personId: input.personId,
+      role: merged.role,
+      skills: merged.skills,
+      strengths: merged.strengths,
+      availability: dbAvailability as any,
+      reliabilityScore: merged.reliabilityScore,
+      timezone: merged.timezone,
+      preferredChannel: dbChannel as any,
+      lastProfileUpdate: now,
+    },
   })
 
-  return updated
+  return {
+    ...merged,
+    lastProfileUpdate: now.toISOString(),
+  }
 }
 
 /**
@@ -148,14 +176,14 @@ export async function suggestAssignee(
   },
   workspaceId: string,
 ): Promise<AssigneeSuggestion[]> {
-  // Get all people in workspace with profiles
+  // Get all people in workspace with their profiles
   const people = await prisma.person.findMany({
     where: { workspaceId },
     select: {
       id: true,
       name: true,
-      notes: true,
       userId: true,
+      collaboratorProfile: true,
     },
   })
 
@@ -178,7 +206,21 @@ export async function suggestAssignee(
   const suggestions: AssigneeSuggestion[] = []
 
   for (const person of people) {
-    const profile = await getCollaboratorProfile(person.id)
+    const profile: CollaboratorProfile = person.collaboratorProfile
+      ? {
+          role: person.collaboratorProfile.role,
+          skills: person.collaboratorProfile.skills,
+          strengths: person.collaboratorProfile.strengths,
+          availability: person.collaboratorProfile.availability,
+          reliabilityScore: person.collaboratorProfile.reliabilityScore,
+          timezone: person.collaboratorProfile.timezone,
+          preferredChannel: person.collaboratorProfile.preferredChannel
+            ? person.collaboratorProfile.preferredChannel.toLowerCase() as CollaboratorProfile['preferredChannel']
+            : null,
+          lastProfileUpdate: person.collaboratorProfile.lastProfileUpdate?.toISOString() ?? null,
+        }
+      : { ...EMPTY_PROFILE }
+
     const score = calculateAssigneeScore(taskContext, profile, person, workloadMap)
 
     if (score.score > 0) {

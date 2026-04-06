@@ -24,7 +24,7 @@ export async function classifyInput(
   workspaceId: string,
 ): Promise<ClassificationResult> {
   // Gather context for the AI
-  const [projects, members, recentTasks] = await Promise.all([
+  const [projects, members, recentTasks, people] = await Promise.all([
     prisma.project.findMany({
       where: { workspaceId, status: { in: ['ACTIVE', 'PAUSED'] } },
       select: { id: true, name: true },
@@ -32,10 +32,7 @@ export async function classifyInput(
       take: 20,
     }),
     prisma.user.findMany({
-      where: {
-        // PRISMA_SCHEMA_FIELD
-        workspaceMembers: { some: { workspaceId } },
-      } as any,
+      where: { workspaceId },
       select: { id: true, name: true },
     }),
     prisma.task.findMany({
@@ -47,11 +44,24 @@ export async function classifyInput(
       orderBy: { updatedAt: 'desc' },
       take: 30,
     }),
+    prisma.person.findMany({
+      where: { workspaceId, userId: { not: null } },
+      select: { id: true, name: true, userId: true },
+      take: 50,
+    }),
   ])
+
+  // Merge User + linked Person records into a unified people list
+  const memberMap = new Map(members.map((m) => [m.id, m.name ?? 'Unknown']))
+  for (const p of people) {
+    if (p.userId && !memberMap.has(p.userId)) {
+      memberMap.set(p.userId, p.name)
+    }
+  }
 
   const context = {
     existingProjects: projects.map((p) => ({ id: p.id, name: p.name })),
-    teamMembers: members.map((m) => ({ id: m.id, name: m.name ?? 'Unknown' })),
+    teamMembers: Array.from(memberMap, ([id, name]) => ({ id, name })),
     recentTasks: recentTasks.map((t) => ({ id: t.id, title: t.title, projectId: t.projectId })),
   }
 
@@ -155,10 +165,10 @@ function executeNavigate(
   }
 
   if (command.target === 'project' && command.projectId) {
-    return { intent: 'navigate', path: `/projects/${command.projectId}` }
+    return { intent: 'navigate', path: `/projects/${command.projectId}`, entityName: command.projectName ?? undefined }
   }
 
-  return { intent: 'navigate', path: pathMap[command.target] ?? '/' }
+  return { intent: 'navigate', path: pathMap[command.target] ?? '/', entityName: command.target }
 }
 
 // ─── Create Task ───
@@ -193,12 +203,20 @@ async function executeCreateTask(
       creatorId: userId,
       assigneeId: command.assigneeId ?? undefined,
       dueDate: command.dueDate ? new Date(command.dueDate) : undefined,
-      // PRISMA_SCHEMA_FIELD
       lastActivityAt: new Date(),
-    } as any,
+    },
   })
 
-  return { intent: 'create_task', taskId: task.id, projectId }
+  // Fetch project name for rich result
+  const proj = await prisma.project.findUnique({ where: { id: projectId }, select: { name: true } })
+  return {
+    intent: 'create_task',
+    taskId: task.id,
+    projectId,
+    entityName: command.title,
+    entityLink: `/tasks/${task.id}`,
+    projectName: proj?.name ?? undefined,
+  }
 }
 
 // ─── Assign Task ───
@@ -228,9 +246,8 @@ async function executeAssignTask(
     const match = await prisma.user.findFirst({
       where: {
         name: { contains: command.assigneeName, mode: 'insensitive' },
-        // PRISMA_SCHEMA_FIELD
-        workspaceMembers: { some: { workspaceId } },
-      } as any,
+        workspaceId,
+      },
       select: { id: true },
     })
     if (!match) throw new Error(`Person not found: "${command.assigneeName}"`)
@@ -241,12 +258,23 @@ async function executeAssignTask(
     where: { id: taskId },
     data: {
       assigneeId,
-      // PRISMA_SCHEMA_FIELD
       lastActivityAt: new Date(),
-    } as any,
+    },
   })
 
-  return { intent: 'assign_task', taskId, assigneeId }
+  // Fetch names for rich result
+  const [taskData, assigneeData] = await Promise.all([
+    prisma.task.findUnique({ where: { id: taskId }, select: { title: true } }),
+    prisma.user.findUnique({ where: { id: assigneeId }, select: { name: true } }),
+  ])
+  return {
+    intent: 'assign_task',
+    taskId,
+    assigneeId,
+    entityName: taskData?.title ?? command.taskTitle,
+    entityLink: `/tasks/${taskId}`,
+    assigneeName: assigneeData?.name ?? command.assigneeName,
+  }
 }
 
 // ─── Complete Task ───
@@ -273,12 +301,17 @@ async function executeCompleteTask(
     where: { id: taskId },
     data: {
       status: 'DONE',
-      // PRISMA_SCHEMA_FIELD
       lastActivityAt: new Date(),
-    } as any,
+    },
   })
 
-  return { intent: 'complete_task', taskId }
+  const taskData = await prisma.task.findUnique({ where: { id: taskId }, select: { title: true } })
+  return {
+    intent: 'complete_task',
+    taskId,
+    entityName: taskData?.title ?? command.taskTitle,
+    entityLink: `/tasks/${taskId}`,
+  }
 }
 
 // ─── Create Project ───
@@ -298,7 +331,12 @@ async function executeCreateProject(
     },
   })
 
-  return { intent: 'create_project', projectId: project.id }
+  return {
+    intent: 'create_project',
+    projectId: project.id,
+    entityName: command.name,
+    entityLink: `/projects/${project.id}`,
+  }
 }
 
 // ─── Add Member ───
@@ -318,19 +356,34 @@ async function executeAddMember(
     projectId = match.id
   }
 
-  // Find user
+  // Find user — check User table first, then Person table (linked contacts)
   let userId = command.personId
   if (!userId) {
-    const match = await prisma.user.findFirst({
+    // 1. Try direct User lookup
+    const userMatch = await prisma.user.findFirst({
       where: {
         name: { contains: command.personName, mode: 'insensitive' },
-        // PRISMA_SCHEMA_FIELD
-        workspaceMembers: { some: { workspaceId } },
-      } as any,
+        workspaceId,
+      },
       select: { id: true },
     })
-    if (!match) throw new Error(`Person not found: "${command.personName}"`)
-    userId = match.id
+    if (userMatch) {
+      userId = userMatch.id
+    } else {
+      // 2. Fallback: Try Person table (contacts linked to workspace users)
+      const personMatch = await prisma.person.findFirst({
+        where: {
+          name: { contains: command.personName, mode: 'insensitive' },
+          workspaceId,
+          userId: { not: null },
+        },
+        select: { userId: true },
+      })
+      if (personMatch?.userId) {
+        userId = personMatch.userId
+      }
+    }
+    if (!userId) throw new Error(`Person not found: "${command.personName}"`)
   }
 
   // Check if already a member
@@ -344,7 +397,15 @@ async function executeAddMember(
     })
   }
 
-  return { intent: 'add_member', projectId, userId }
+  const projData = await prisma.project.findUnique({ where: { id: projectId }, select: { name: true } })
+  return {
+    intent: 'add_member',
+    projectId,
+    userId,
+    entityName: projData?.name ?? command.projectName,
+    entityLink: `/projects/${projectId}`,
+    personName: command.personName,
+  }
 }
 
 // ─── Create Event ───
@@ -372,12 +433,16 @@ async function executeCreateEvent(
       location: command.location,
       workspaceId,
       creatorId: userId,
-      // PRISMA_SCHEMA_FIELD: projectId
       ...(projectId && { projectId }),
-    } as any,
+    },
   })
 
-  return { intent: 'create_event', eventId: event.id }
+  return {
+    intent: 'create_event',
+    eventId: event.id,
+    entityName: command.title,
+    entityLink: `/calendar`,
+  }
 }
 
 // ─── Save Note ───
@@ -406,7 +471,17 @@ async function executeSaveNote(
     userId,
   )
 
-  return { intent: 'save_note', noteId: note.id, projectId: projectId ?? null }
+  const projName = projectId
+    ? (await prisma.project.findUnique({ where: { id: projectId }, select: { name: true } }))?.name
+    : undefined
+  return {
+    intent: 'save_note',
+    noteId: note.id,
+    projectId: projectId ?? null,
+    entityName: command.title,
+    entityLink: `/notes`,
+    projectName: projName ?? undefined,
+  }
 }
 
 // ─── Update Task ───
@@ -461,9 +536,8 @@ async function executeUpdateTask(
       const match = await prisma.user.findFirst({
         where: {
           name: { contains: command.assigneeName, mode: 'insensitive' },
-          // PRISMA_SCHEMA_FIELD
-          workspaceMembers: { some: { workspaceId } },
-        } as any,
+          workspaceId,
+        },
         select: { id: true },
       })
       if (match) assigneeId = match.id
@@ -493,15 +567,21 @@ async function executeUpdateTask(
     throw new Error('No fields to update')
   }
 
-  // PRISMA_SCHEMA_FIELD
   updateData.lastActivityAt = new Date()
 
   await prisma.task.update({
     where: { id: taskId },
-    data: updateData as any,
+    data: updateData,
   })
 
-  return { intent: 'update_task', taskId, updatedFields }
+  const taskInfo = await prisma.task.findUnique({ where: { id: taskId }, select: { title: true } })
+  return {
+    intent: 'update_task',
+    taskId,
+    updatedFields,
+    entityName: taskInfo?.title ?? command.taskTitle,
+    entityLink: `/tasks/${taskId}`,
+  }
 }
 
 // ─── Update Event ───
@@ -561,7 +641,14 @@ async function executeUpdateEvent(
     data: updateData,
   })
 
-  return { intent: 'update_event', eventId, updatedFields }
+  const eventInfo = await prisma.event.findUnique({ where: { id: eventId }, select: { title: true } })
+  return {
+    intent: 'update_event',
+    eventId,
+    updatedFields,
+    entityName: eventInfo?.title ?? command.eventTitle,
+    entityLink: `/calendar`,
+  }
 }
 
 // ─── Update Project ───
@@ -612,7 +699,14 @@ async function executeUpdateProject(
     data: updateData,
   })
 
-  return { intent: 'update_project', projectId, updatedFields }
+  const projInfo = await prisma.project.findUnique({ where: { id: projectId }, select: { name: true } })
+  return {
+    intent: 'update_project',
+    projectId,
+    updatedFields,
+    entityName: projInfo?.name ?? command.projectName,
+    entityLink: `/projects/${projectId}`,
+  }
 }
 
 // ─── Multi-step execution ───

@@ -58,26 +58,15 @@ export async function getEventById(id: string, workspaceId?: string) {
     include: {
       creator: { select: { id: true, name: true } },
       attendees: true,
+      project: { select: { id: true, name: true } },
     },
   })
 
-  if (!event) return null
-
-  // Fetch project separately if projectId exists (until prisma generate runs with new schema)
-  let project: { id: string; name: string } | null = null
-  if ((event as any).projectId) {
-    project = await prisma.project.findUnique({
-      where: { id: (event as any).projectId },
-      select: { id: true, name: true },
-    })
-  }
-
-  return { ...event, project }
+  return event
 }
 
 export async function getEventsByProject(projectId: string, workspaceId: string, limit = 50) {
-  // PRISMA_SCHEMA_FIELD: projectId — requires `prisma generate` after schema update
-  return (prisma.event as any).findMany({
+  return prisma.event.findMany({
     where: {
       projectId,
       workspaceId,

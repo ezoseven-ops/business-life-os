@@ -30,8 +30,7 @@ export async function getGoogleCalendarProvider(
     where: {
       workspaceId,
       enabled: true,
-      // PRISMA_SCHEMA_FIELD: GOOGLE_CALENDAR now in schema — run `prisma generate`
-      type: 'GOOGLE_CALENDAR' as any,
+      type: 'GOOGLE_CALENDAR',
     },
   })
 
@@ -59,7 +58,7 @@ export async function getGoogleCalendarProvider(
         where: { id: integration!.id },
         data: {
           config: {
-            ...(config as any),
+            ...config,
             accessToken: newTokens.accessToken,
             expiresAt: newTokens.expiresAt,
           },
@@ -71,29 +70,28 @@ export async function getGoogleCalendarProvider(
 
 // ── Sync Map (database-backed) ──
 
-async function getSyncEntry(eventId: string, provider: string) {
-  // PRISMA_SCHEMA_FIELD: CalendarSyncMap model — run `prisma generate`
-  return (prisma as any).calendarSyncMap.findUnique({
+async function getSyncEntry(eventId: string, provider: 'GOOGLE_CALENDAR' | 'APPLE_CALENDAR') {
+  return prisma.calendarSyncMap.findUnique({
     where: { eventId_provider: { eventId, provider } },
   })
 }
 
-async function upsertSyncEntry(eventId: string, externalId: string, provider: string) {
-  return (prisma as any).calendarSyncMap.upsert({
+async function upsertSyncEntry(eventId: string, externalId: string, provider: 'GOOGLE_CALENDAR' | 'APPLE_CALENDAR') {
+  return prisma.calendarSyncMap.upsert({
     where: { eventId_provider: { eventId, provider } },
-    update: { externalId, lastSyncAt: new Date(), syncError: null, syncStatus: 'success' },
-    create: { eventId, externalId, provider, syncStatus: 'success' },
+    update: { externalId, lastSyncAt: new Date(), syncError: null, syncStatus: 'SUCCESS' },
+    create: { eventId, externalId, provider, syncStatus: 'SUCCESS' },
   })
 }
 
-async function deleteSyncEntry(eventId: string, provider: string) {
-  return (prisma as any).calendarSyncMap.deleteMany({
+async function deleteSyncEntry(eventId: string, provider: 'GOOGLE_CALENDAR' | 'APPLE_CALENDAR') {
+  return prisma.calendarSyncMap.deleteMany({
     where: { eventId, provider },
   })
 }
 
-async function findSyncByExternalId(externalId: string, provider: string) {
-  return (prisma as any).calendarSyncMap.findFirst({
+async function findSyncByExternalId(externalId: string, provider: 'GOOGLE_CALENDAR' | 'APPLE_CALENDAR') {
+  return prisma.calendarSyncMap.findFirst({
     where: { externalId, provider },
   })
 }
@@ -155,10 +153,10 @@ export async function pushEventToCalendar(
     captureError(err, { module: 'calendar-sync', action: 'pushEvent', eventId })
     // Record error in sync map for traceability
     try {
-      await (prisma as any).calendarSyncMap.upsert({
+      await prisma.calendarSyncMap.upsert({
         where: { eventId_provider: { eventId, provider: 'GOOGLE_CALENDAR' } },
-        update: { syncError: message, syncStatus: 'failed', lastSyncAt: new Date() },
-        create: { eventId, externalId: '', provider: 'GOOGLE_CALENDAR', syncError: message, syncStatus: 'failed' },
+        update: { syncError: message, syncStatus: 'FAILED', lastSyncAt: new Date() },
+        create: { eventId, externalId: '', provider: 'GOOGLE_CALENDAR', syncError: message, syncStatus: 'FAILED' },
       })
     } catch { /* best effort — don't mask original error */ }
     return null
@@ -287,17 +285,17 @@ export async function getFailedSyncEntries(
   const eventIds = events.map(e => e.id)
   if (eventIds.length === 0) return []
 
-  const failedEntries = await (prisma as any).calendarSyncMap.findMany({
+  const failedEntries = await prisma.calendarSyncMap.findMany({
     where: {
       eventId: { in: eventIds },
-      syncStatus: 'failed',
+      syncStatus: 'FAILED',
     },
     orderBy: { lastSyncAt: 'desc' },
   })
 
   const eventMap = new Map(events.map(e => [e.id, e.title]))
 
-  return failedEntries.map((entry: any) => ({
+  return failedEntries.map((entry) => ({
     id: entry.id,
     eventId: entry.eventId,
     eventTitle: eventMap.get(entry.eventId) ?? 'Unknown event',
@@ -318,9 +316,9 @@ export async function retrySyncForEvent(
   // Increment retry count
   const existing = await getSyncEntry(eventId, 'GOOGLE_CALENDAR')
   if (existing) {
-    await (prisma as any).calendarSyncMap.update({
+    await prisma.calendarSyncMap.update({
       where: { id: existing.id },
-      data: { retryCount: (existing.retryCount ?? 0) + 1, syncStatus: 'pending' },
+      data: { retryCount: (existing.retryCount ?? 0) + 1, syncStatus: 'PENDING' },
     })
   }
 

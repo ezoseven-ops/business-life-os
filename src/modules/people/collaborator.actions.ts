@@ -88,7 +88,7 @@ export async function captureCollaboratorAction(
         workspaceId,
         name: {
           contains: captured.name,
-          mode: 'insensitive' as any,
+          mode: 'insensitive',
         },
       },
     })

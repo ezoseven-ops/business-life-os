@@ -59,7 +59,7 @@ export async function extractTasks(
 
     await prisma.aiJob.update({
       where: { id: job.id },
-      data: { status: 'DONE', output: parsed as any },
+      data: { status: 'DONE', output: parsed ?? undefined },
     })
 
     return parsed

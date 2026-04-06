@@ -26,7 +26,6 @@ type ProjectWithRelations = {
 export async function getProjectOverview(workspaceId: string): Promise<ProjectOverview[]> {
   const now = new Date()
 
-  // PRISMA_SCHEMA_FIELD: include venture, orderBy projectPriority
   const projects = (await prisma.project.findMany({
     where: {
       workspaceId,
@@ -40,11 +39,11 @@ export async function getProjectOverview(workspaceId: string): Promise<ProjectOv
           dueDate: true,
         },
       },
-    } as any,
+    },
     orderBy: [
       { projectPriority: 'asc' }, // P0 first
       { updatedAt: 'desc' },
-    ] as any,
+    ],
   })) as unknown as ProjectWithRelations[]
 
   return projects.map((project) => {

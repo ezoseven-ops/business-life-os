@@ -72,7 +72,6 @@ export async function getFocusTasks(
   const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000)
   const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
 
-  // PRISMA_SCHEMA_FIELD: project select includes projectPriority + venture
   const tasks = (await prisma.task.findMany({
     where: {
       project: { workspaceId },
@@ -88,7 +87,7 @@ export async function getFocusTasks(
         },
       },
       assignee: { select: { name: true } },
-    } as any,
+    },
     take: 100,
   })) as unknown as TaskWithRelations[]
 

@@ -23,8 +23,13 @@ export async function getPeople(workspaceId: string) {
     where: { workspaceId },
     include: {
       _count: { select: { messages: true } },
+      messages: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { createdAt: true, content: true },
+      },
     },
-    orderBy: { name: 'asc' },
+    orderBy: { updatedAt: 'desc' },
   })
 }
 
@@ -38,6 +43,63 @@ export async function getPersonById(id: string, workspaceId?: string) {
       },
     },
   })
+}
+
+/**
+ * Get a person's work context: assigned tasks, related projects, recent activity.
+ * Used by the person detail page to show what this person is working on.
+ */
+export async function getPersonWorkContext(personId: string, workspaceId: string) {
+  const person = await prisma.person.findFirst({
+    where: { id: personId, workspaceId },
+    select: { userId: true },
+  })
+
+  if (!person?.userId) {
+    return { tasks: [], projects: [], activity: [] }
+  }
+
+  const [tasks, projectMemberships, activity] = await Promise.all([
+    prisma.task.findMany({
+      where: {
+        assigneeId: person.userId,
+        project: { workspaceId },
+        status: { in: ['TODO', 'IN_PROGRESS', 'WAITING'] },
+      },
+      include: {
+        project: { select: { id: true, name: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
+    }),
+    prisma.projectMember.findMany({
+      where: { userId: person.userId },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            _count: { select: { tasks: true } },
+          },
+        },
+      },
+    }),
+    prisma.activity.findMany({
+      where: { userId: person.userId },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    }),
+  ])
+
+  return {
+    tasks,
+    projects: projectMemberships.map((m) => ({
+      ...m.project,
+      role: m.role,
+    })),
+    activity,
+  }
 }
 
 export async function findPersonByTelegramId(telegramId: string, workspaceId: string) {

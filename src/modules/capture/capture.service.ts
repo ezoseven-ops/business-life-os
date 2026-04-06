@@ -25,11 +25,8 @@ export async function parseCapture(
       orderBy: { updatedAt: 'desc' },
       take: 20,
     }),
-    // PRISMA_SCHEMA_FIELD: workspaceMembers relation exists in schema — run `prisma generate`
     prisma.user.findMany({
-      where: {
-        workspaceMembers: { some: { workspaceId } },
-      } as any,
+      where: { workspaceId },
       select: { id: true, name: true },
     }),
   ])
@@ -182,9 +179,8 @@ async function executeFollowUpCapture(
       creatorId: userId,
       assigneeId: followUp.targetPersonId ?? undefined,
       dueDate: followUp.dueDate ? new Date(followUp.dueDate) : undefined,
-      // PRISMA_SCHEMA_FIELD
       lastActivityAt: new Date(),
-    } as any,
+    },
   })
 
   return { classification: 'follow_up', taskId: task.id, projectId }
@@ -350,7 +346,7 @@ async function executeCollaboratorCapture(
   let person = await prisma.person.findFirst({
     where: {
       workspaceId,
-      name: { contains: collaborator.name, mode: 'insensitive' } as any,
+      name: { contains: collaborator.name, mode: 'insensitive' },
     },
   })
 
@@ -416,9 +412,8 @@ async function createTasks(
         creatorId: userId,
         assigneeId: task.assigneeId ?? undefined,
         dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-        // PRISMA_SCHEMA_FIELD
         lastActivityAt: new Date(),
-      } as any,
+      },
     })
     taskIds.push(created.id)
   }

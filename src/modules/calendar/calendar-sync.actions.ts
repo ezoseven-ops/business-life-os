@@ -78,13 +78,11 @@ export async function handleGoogleCalendarCallbackAction(
     })
 
     // Store tokens in Integration table
-    // PRISMA_SCHEMA_FIELD: IntegrationType needs GOOGLE_CALENDAR added
-    // For now we use APPLE_CALENDAR with a provider flag in config
     await prisma.integration.upsert({
       where: {
         workspaceId_type: {
           workspaceId,
-          type: 'GOOGLE_CALENDAR' as any,
+          type: 'GOOGLE_CALENDAR',
         },
       },
       update: {
@@ -99,7 +97,7 @@ export async function handleGoogleCalendarCallbackAction(
       },
       create: {
         workspaceId,
-        type: 'GOOGLE_CALENDAR' as any,
+        type: 'GOOGLE_CALENDAR',
         config: {
           provider: 'GOOGLE_CALENDAR',
           accessToken: tokens.accessToken,
@@ -264,14 +262,14 @@ export async function disconnectGoogleCalendarAction(): Promise<ActionResult<{ d
     const integration = await prisma.integration.findFirst({
       where: {
         workspaceId,
-        type: 'GOOGLE_CALENDAR' as any,
+        type: 'GOOGLE_CALENDAR',
       },
       select: { id: true },
     })
 
     if (integration) {
       // Get all app event IDs that have sync entries for this provider
-      const syncEntries = await (prisma as any).calendarSyncMap.findMany({
+      const syncEntries = await prisma.calendarSyncMap.findMany({
         where: { provider: 'GOOGLE_CALENDAR' },
         select: { eventId: true },
       })
@@ -288,7 +286,7 @@ export async function disconnectGoogleCalendarAction(): Promise<ActionResult<{ d
         const eventIdSet = new Set(workspaceEventIds.map(e => e.id))
 
         if (eventIdSet.size > 0) {
-          await (prisma as any).calendarSyncMap.deleteMany({
+          await prisma.calendarSyncMap.deleteMany({
             where: {
               provider: 'GOOGLE_CALENDAR',
               eventId: { in: Array.from(eventIdSet) },

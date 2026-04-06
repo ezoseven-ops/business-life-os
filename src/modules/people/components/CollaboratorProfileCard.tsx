@@ -7,7 +7,7 @@ import {
   captureCollaboratorAction,
 } from '../collaborator.actions'
 import { ErrorBanner } from '@/components/ErrorStates'
-import type { CollaboratorProfile } from '../collaborator.types'
+import type { CollaboratorProfile, UpdateCollaboratorInput } from '../collaborator.types'
 
 const AVAILABILITY_LABELS: Record<string, string> = {
   FULL_TIME: 'Full-time',
@@ -73,10 +73,10 @@ export function CollaboratorProfileCard({
       role: editRole.trim() || null,
       skills: editSkills.split(',').map(s => s.trim()).filter(Boolean),
       strengths: editStrengths.split(',').map(s => s.trim()).filter(Boolean),
-      availability: editAvailability as any,
+      availability: editAvailability as UpdateCollaboratorInput['availability'],
       reliabilityScore: editReliability,
       timezone: editTimezone.trim() || null,
-      preferredChannel: editChannel ? (editChannel as any) : null,
+      preferredChannel: editChannel ? (editChannel as UpdateCollaboratorInput['preferredChannel']) : null,
     })
 
     setSaving(false)

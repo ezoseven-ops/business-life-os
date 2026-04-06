@@ -55,7 +55,6 @@ export async function getSignals(workspaceId: string): Promise<Signal[]> {
   const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-  // PRISMA_SCHEMA_FIELD: project select includes projectPriority + venture
   const tasks = (await prisma.task.findMany({
     where: {
       project: { workspaceId },
@@ -70,7 +69,7 @@ export async function getSignals(workspaceId: string): Promise<Signal[]> {
         },
       },
       assignee: { select: { name: true } },
-    } as any,
+    },
   })) as unknown as TaskWithRelations[]
 
   // Collect candidate signals per task — then pick highest severity

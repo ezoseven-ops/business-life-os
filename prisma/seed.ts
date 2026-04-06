@@ -71,6 +71,33 @@ async function main() {
   console.log('  Workspace created + all users linked')
 
   // ──────────────────────────────────────
+  // 2b. PERSON records for each User (Person ↔ User bridge)
+  // ──────────────────────────────────────
+
+  const userPersonPairs = [
+    { user: owner, name: 'Karol (Owner)' },
+    { user: teamMember, name: 'Anna (Team)' },
+    { user: client, name: 'John (Client)' },
+  ]
+
+  for (const { user } of userPersonPairs) {
+    // Only create if no Person is already linked to this User
+    const existing = await prisma.person.findUnique({ where: { userId: user.id } })
+    if (!existing) {
+      await prisma.person.create({
+        data: {
+          name: user.name ?? user.email.split('@')[0],
+          email: user.email,
+          workspaceId: workspace.id,
+          userId: user.id,
+        },
+      })
+    }
+  }
+
+  console.log('  Person records linked to all users')
+
+  // ──────────────────────────────────────
   // 3. PROJECTS — 2 projects
   // ──────────────────────────────────────
 

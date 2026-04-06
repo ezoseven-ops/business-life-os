@@ -23,7 +23,7 @@ export async function getCalendarProviders(
       workspaceId,
       enabled: true,
       // Calendar-related integrations
-      type: { in: ['APPLE_CALENDAR', 'GOOGLE_CALENDAR'] as any },
+      type: { in: ['APPLE_CALENDAR', 'GOOGLE_CALENDAR'] },
     },
   })
 
@@ -33,7 +33,7 @@ export async function getCalendarProviders(
     const config = integration.config as Record<string, any>
     if (!config) continue
 
-    // Google Calendar (stored under APPLE_CALENDAR type for now)
+    // Google Calendar
     if (config.provider === 'GOOGLE_CALENDAR') {
       const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID
       const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET

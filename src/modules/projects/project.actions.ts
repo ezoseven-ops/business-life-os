@@ -61,7 +61,7 @@ export async function updateProjectPhaseAction(id: string, phase: string) {
   return safeAction(async () => {
     const session = await requireRole('OWNER', 'TEAM')
     const validated = projectPhaseEnum.parse(phase)
-    const project = await projectService.updateProject(id, { phase: validated } as any, session.workspaceId)
+    const project = await projectService.updateProject(id, { phase: validated }, session.workspaceId)
     await logActivity('STATUS_CHANGED', 'PROJECT', project.id, session.user.id, { phase: validated })
     revalidatePath(`/projects/${id}`)
     revalidatePath('/projects')

@@ -79,7 +79,7 @@ export async function getSession(
   }
 
   // Read from DB
-  const dbRow = await (prisma as any).agentSession.findUnique({
+  const dbRow = await prisma.agentSession.findUnique({
     where: { workspaceId_userId: { workspaceId, userId } },
   }).catch(() => null)
 
@@ -95,13 +95,13 @@ export async function getSession(
       })
 
       // Mark as expired in DB (don't delete — traceable)
-      await (prisma as any).agentSession.update({
+      await prisma.agentSession.update({
         where: { id: dbRow.id },
         data: { expired: true },
       }).catch(() => {})
 
       // Delete and create fresh
-      await (prisma as any).agentSession.delete({
+      await prisma.agentSession.delete({
         where: { id: dbRow.id },
       }).catch(() => {})
 
@@ -431,7 +431,7 @@ export function extractEntitiesFromCaptureResult(
  * Can be called from a cron job or server startup.
  */
 export async function cleanupExpiredSessions(): Promise<number> {
-  const result = await (prisma as any).agentSession.deleteMany({
+  const result = await prisma.agentSession.deleteMany({
     where: {
       OR: [
         { expiresAt: { lt: new Date() } },
@@ -456,7 +456,7 @@ async function createFreshSession(workspaceId: string, userId: string): Promise<
     unresolvedItems: [],
   }
 
-  const row = await (prisma as any).agentSession.create({
+  const row = await prisma.agentSession.create({
     data: {
       workspaceId,
       userId,
@@ -492,7 +492,7 @@ async function persistSession(session: AgentSession): Promise<void> {
     unresolvedItems: session.unresolvedItems,
   }
 
-  await (prisma as any).agentSession.upsert({
+  await prisma.agentSession.upsert({
     where: { workspaceId_userId: { workspaceId: session.workspaceId, userId: session.userId } },
     create: {
       id: session.sessionId,
@@ -512,7 +512,7 @@ async function persistSession(session: AgentSession): Promise<void> {
 }
 
 async function touchSession(sessionId: string): Promise<void> {
-  await (prisma as any).agentSession.update({
+  await prisma.agentSession.update({
     where: { id: sessionId },
     data: { expiresAt: new Date(Date.now() + SESSION_TTL_MS) },
   }).catch(() => {})

@@ -23,7 +23,7 @@ export async function saveInboundMessage(
       content: message.content,
       mediaUrl: message.mediaUrl,
       status: 'DELIVERED',
-      rawPayload: message.rawPayload as any,
+      rawPayload: message.rawPayload ?? undefined,
       personId,
       workspaceId,
     },

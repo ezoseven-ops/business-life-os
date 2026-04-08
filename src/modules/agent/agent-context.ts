@@ -111,7 +111,7 @@ export async function getSession(
     }
 
     // Valid session — hydrate
-    const sessionData = dbRow.sessionData as AgentSessionData
+    const sessionData = dbRow.sessionData as unknown as AgentSessionData
     const session: AgentSession = {
       sessionId: dbRow.id,
       workspaceId,

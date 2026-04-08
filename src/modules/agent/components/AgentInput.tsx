@@ -19,6 +19,7 @@ import type { CaptureDraft, CaptureResult } from '@/modules/capture/capture.type
 import type { CommandPayload, CommandResult, MultiStepEntry } from '@/modules/command/command.types'
 import type { MessageSendResult } from '@/modules/messages/message-send.service'
 import { AgentThinkingSkeleton } from '@/components/Skeleton'
+import { getNextActions, type NextAction } from '../agent.continuity'
 
 // ─────────────────────────────────────────────
 // AgentInput — Agent Mode UI
@@ -71,6 +72,40 @@ const COMMAND_DONE_MESSAGES: Record<string, string> = {
   update_task: 'Task updated', update_event: 'Event updated', update_project: 'Project updated',
 }
 
+// ─── Dynamic placeholder — context-aware input hint ───
+function getContextualPlaceholder(
+  snapshot: AgentSessionSnapshot | null,
+  lastResult: CommandResult | null,
+): string {
+  // No session context yet
+  if (!snapshot || snapshot.actionCount === 0) {
+    return 'What needs to happen?'
+  }
+
+  // Context-aware hints based on last action's entity type
+  const entityType = snapshot.currentEntityType
+  const entityName = snapshot.currentEntityName
+
+  if (entityType === 'task' && entityName) {
+    return `Assign, set deadline, or continue with "${entityName}"...`
+  }
+  if (entityType === 'project' && entityName) {
+    return `Add tasks, members, or continue with "${entityName}"...`
+  }
+  if (entityType === 'event' && entityName) {
+    return `Add attendees, change time, or continue...`
+  }
+  if (entityType === 'person' && entityName) {
+    return `Assign task, schedule meeting with ${entityName}...`
+  }
+  if (entityType === 'note') {
+    return 'Follow up, ask, or start fresh...'
+  }
+
+  // Fallback: has context but no specific entity type
+  return 'Follow up, ask, or start fresh...'
+}
+
 export function AgentInput() {
   const router = useRouter()
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -99,6 +134,10 @@ export function AgentInput() {
   const [draft, setDraft] = useState<CaptureDraft | null>(null)
   const [captureResult, setCaptureResult] = useState<CaptureResult | null>(null)
   const [messageSendResult, setMessageSendResult] = useState<MessageSendResult | null>(null)
+
+  // ── Continuity state ──
+  const [nextActions, setNextActions] = useState<NextAction[]>([])
+  const doneTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const recorder = useAudioRecorder()
 
@@ -275,6 +314,32 @@ export function AgentInput() {
     setVoiceSource(false)
   }, [recorder])
 
+  // ── Flow reset: transition from done→idle while refreshing session snapshot ──
+  // Continuous flow: keeps the system "warm" with context
+  const flowReset = useCallback(() => {
+    setState('idle')
+    setText('')
+    setDraft(null)
+    setCommandPayload(null)
+    setCommandInterpretation('')
+    // Preserve commandResult briefly for context-aware placeholder
+    setMultiSteps([])
+    setMultiStepInterpretation('')
+    setCaptureResult(null)
+    setMessageSendResult(null)
+    setVoiceSource(false)
+    setAgentResponse(null)
+    setNextActions([])
+    if (doneTimerRef.current) { clearTimeout(doneTimerRef.current); doneTimerRef.current = null }
+    // Refresh session snapshot to get latest context
+    agentGetSnapshotAction().then((r) => {
+      if (r.success) setSessionSnapshot(r.data)
+    })
+    // Clear commandResult after a tick so placeholder can use it
+    setTimeout(() => setCommandResult(null), 100)
+    if (inputRef.current) inputRef.current.style.height = 'auto'
+  }, [])
+
   // ── Command confirm (shared for command, follow_up, correction) ──
   const handleCommandConfirm = useCallback(async () => {
     if (!commandPayload) return
@@ -285,15 +350,25 @@ export function AgentInput() {
       setCommandResult(response.data)
       setState('done')
 
+      // Compute continuity actions
+      const actions = getNextActions(response.data)
+      setNextActions(actions)
+
       if (response.data.intent === 'navigate' && 'path' in response.data) {
         setTimeout(() => router.push((response.data as { intent: 'navigate'; path: string }).path), 400)
       }
 
-      // Soft reset — keep context, clear input
-      setTimeout(() => {
-        router.refresh()
-        softReset()
-      }, 2500)
+      // Continuous flow: refresh data but DON'T reset to idle.
+      // Keep the "done" state visible with next-actions until user acts or timeout.
+      if (doneTimerRef.current) clearTimeout(doneTimerRef.current)
+      router.refresh()
+      // Only auto-collapse after extended period if no next actions
+      if (actions.length === 0) {
+        doneTimerRef.current = setTimeout(() => {
+          flowReset()
+        }, 5000)
+      }
+      // With next actions: stay in done indefinitely until user interacts
     } else {
       setError(response.error)
       setState('error')
@@ -313,12 +388,13 @@ export function AgentInput() {
         setTimeout(() => router.push((lastSuccess.result as { intent: 'navigate'; path: string }).path), 400)
       }
       setState('done')
-      setTimeout(() => { router.refresh(); softReset() }, 2500)
+      router.refresh()
+      doneTimerRef.current = setTimeout(() => { flowReset() }, 5000)
     } else {
       setError(response.error)
       setState('error')
     }
-  }, [multiSteps, multiStepInterpretation, router])
+  }, [multiSteps, multiStepInterpretation, router, flowReset])
 
   // ── Capture confirm ──
   const handleCaptureConfirm = useCallback(async () => {
@@ -344,12 +420,13 @@ export function AgentInput() {
       }
 
       setState('done')
-      setTimeout(() => { router.refresh(); softReset() }, 2500)
+      router.refresh()
+      doneTimerRef.current = setTimeout(() => { flowReset() }, 5000)
     } else {
       setError(response.error)
       setState('error')
     }
-  }, [draft, agentResponse, router])
+  }, [draft, agentResponse, router, flowReset])
 
   // ── Multi-step remove step ──
   const removeMultiStep = useCallback((index: number) => {
@@ -389,6 +466,8 @@ export function AgentInput() {
     setMessageSendResult(null)
     setVoiceSource(false)
     setAgentResponse(null)
+    setNextActions([])
+    if (doneTimerRef.current) { clearTimeout(doneTimerRef.current); doneTimerRef.current = null }
     // NOTE: sessionSnapshot and suggestions are PRESERVED
     if (inputRef.current) inputRef.current.style.height = 'auto'
   }, [])
@@ -422,65 +501,22 @@ export function AgentInput() {
     : captureResult ? 'Saved' : ''
 
   return (
-    <div className="cc-card overflow-hidden" style={{ borderColor: 'var(--color-cc-border)' }}>
+    <div className="os-input overflow-hidden">
 
-      {/* ═══ AGENT ACTIVE INDICATOR ═══ */}
-      <div
-        className="flex items-center gap-2 px-4 py-2"
-        style={{ borderBottom: '1px solid var(--color-cc-border-subtle)', backgroundColor: 'var(--color-cc-surface)' }}
-      >
-        <span
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: '#22c55e', boxShadow: '0 0 6px #22c55e80' }}
-        />
-        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: '#22c55e' }}>
-          Agent Active
-        </span>
-        {sessionSnapshot?.currentProject && (
-          <span className="text-[11px] ml-auto truncate max-w-[120px]" style={{ color: 'var(--color-cc-text-dim)' }}>
-            {sessionSnapshot.currentProject.name}
-          </span>
-        )}
-        {sessionSnapshot && sessionSnapshot.actionCount > 0 && (
-          <span
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded-md"
-            style={{ backgroundColor: 'var(--color-cc-surface-elevated)', color: 'var(--color-cc-text-muted)' }}
-          >
-            {sessionSnapshot.actionCount} actions
-          </span>
-        )}
-      </div>
-
-      {/* ═══ SESSION EXPIRED BANNER (Block 5) ═══ */}
-      {sessionSnapshot?.sessionExpired && (
-        <div
-          className="flex items-center gap-2 px-4 py-2"
-          style={{ borderBottom: '1px solid var(--color-cc-border-subtle)', backgroundColor: '#f59e0b12' }}
-        >
-          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#f59e0b">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-          </svg>
-          <span className="text-[11px] font-medium" style={{ color: '#f59e0b' }}>
-            Previous session expired — starting fresh
-          </span>
-        </div>
-      )}
-
-      {/* ═══ IDLE / ERROR — Input zone ═══ */}
+      {/* ═══ IDLE / ERROR — Command line feel ═══ */}
       {(state === 'idle' || state === 'error') && (
-        <div className="p-4">
-          {/* Suggestions bar */}
+        <div className="px-5 py-4">
+          {/* Suggestions — subtle, inline */}
           {suggestions.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
+            <div className="flex flex-wrap gap-1.5 mb-2.5">
               {suggestions.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg transition-all active:scale-[0.96]"
+                  className="text-[12px] font-medium px-3 py-1.5 rounded-full transition-all active:scale-[0.96]"
                   style={{
-                    backgroundColor: 'var(--color-cc-accent)' + '1a',
+                    backgroundColor: 'rgba(99, 102, 241, 0.12)',
                     color: 'var(--color-cc-accent)',
-                    border: '1px solid var(--color-cc-accent)' + '33',
                   }}
                 >
                   {s.message}
@@ -489,104 +525,102 @@ export function AgentInput() {
             </div>
           )}
 
-          <textarea
-            ref={inputRef}
-            value={text}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            placeholder={sessionSnapshot?.actionCount
-              ? 'What next? Follow up, ask a question, or start fresh...'
-              : 'What\'s on your mind? Drop anything...'
-            }
-            rows={1}
-            className="w-full bg-transparent text-[15px] leading-relaxed placeholder:text-[var(--color-cc-text-dim)] resize-none outline-none"
-            style={{ color: 'var(--color-cc-text)', minHeight: '44px' }}
-          />
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={inputRef}
+              value={text}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              placeholder={getContextualPlaceholder(sessionSnapshot, commandResult)}
+              rows={1}
+              className="flex-1 bg-transparent text-[19px] leading-relaxed placeholder:text-[var(--color-cc-text-dim)] resize-none outline-none py-1"
+              style={{ color: 'var(--color-cc-text)', minHeight: '36px' }}
+            />
 
-          {state === 'error' && error && (
-            <div className="flex items-start gap-2 mt-2 mb-2 px-3 py-2.5 rounded-xl" style={{ backgroundColor: 'var(--color-cc-fire-muted)' }}>
-              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ color: 'var(--color-cc-fire)' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-              </svg>
-              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--color-cc-fire)' }}>{error}</p>
-            </div>
-          )}
-
-          <div className="flex items-center gap-2" style={{ marginTop: '8px' }}>
+            {/* Mic — small, ghost */}
             <button
               onClick={handleStartRecording}
-              className="flex items-center justify-center rounded-xl transition-all active:scale-[0.95]"
-              style={{ width: '48px', height: '48px', backgroundColor: 'var(--color-cc-surface-elevated)', color: 'var(--color-cc-text-secondary)', flexShrink: 0 }}
+              className="flex items-center justify-center rounded-full transition-all active:scale-[0.92] flex-shrink-0"
+              style={{ width: '36px', height: '36px', color: 'var(--color-cc-text-muted)' }}
               aria-label="Record voice"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
               </svg>
             </button>
 
+            {/* Submit — arrow, only when there's text */}
             <button
               onClick={handleSubmit}
               disabled={!text.trim()}
-              className="flex-1 text-[14px] font-semibold rounded-xl transition-all disabled:opacity-25 active:scale-[0.98]"
-              style={{ backgroundColor: 'var(--color-cc-accent)', color: '#fff', height: '48px' }}
+              className="flex items-center justify-center rounded-full transition-all disabled:opacity-0 active:scale-[0.90] flex-shrink-0"
+              style={{
+                width: '36px',
+                height: '36px',
+                backgroundColor: text.trim() ? 'var(--color-cc-accent)' : 'transparent',
+                color: '#fff',
+              }}
+              aria-label="Send"
             >
-              Process
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+              </svg>
             </button>
           </div>
+
+          {state === 'error' && error && (
+            <div className="flex items-start gap-2 mt-2 px-3 py-2 rounded-xl" style={{ backgroundColor: 'var(--color-cc-fire-muted)' }}>
+              <p className="text-[12px] leading-relaxed" style={{ color: 'var(--color-cc-fire)' }}>{error}</p>
+            </div>
+          )}
         </div>
       )}
 
       {/* ═══ RECORDING ═══ */}
       {state === 'recording' && (
-        <div className="p-4">
-          <div className="flex flex-col items-center py-4">
-            <div className="flex items-center gap-2.5 mb-6">
-              <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: 'var(--color-cc-fire)' }} />
-              <span className="text-[13px] font-medium" style={{ color: 'var(--color-cc-text-secondary)' }}>Recording</span>
-              <span className="text-[15px] font-bold tabular-nums" style={{ color: 'var(--color-cc-text)' }}>{formatElapsed(recorder.elapsed)}</span>
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: 'var(--color-cc-fire)' }} />
+              <span className="text-[13px] tabular-nums font-medium" style={{ color: 'var(--color-cc-text)' }}>{formatElapsed(recorder.elapsed)}</span>
             </div>
-            <button
-              onClick={handleStopRecording}
-              className="flex items-center justify-center rounded-full transition-all active:scale-[0.93]"
-              style={{ width: '72px', height: '72px', backgroundColor: 'var(--color-cc-fire)' }}
-              aria-label="Stop recording"
-            >
-              <span className="block rounded-sm" style={{ width: '24px', height: '24px', backgroundColor: '#fff' }} />
-            </button>
-            <button
-              onClick={handleCancelRecording}
-              className="mt-4 text-[13px] font-medium rounded-lg transition-all active:scale-[0.97]"
-              style={{ color: 'var(--color-cc-text-muted)', padding: '10px 20px' }}
-            >
-              Cancel
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCancelRecording}
+                className="text-[12px] font-medium px-3 py-1.5 rounded-full transition-all active:scale-[0.97]"
+                style={{ color: 'var(--color-cc-text-muted)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleStopRecording}
+                className="flex items-center justify-center rounded-full transition-all active:scale-[0.93]"
+                style={{ width: '36px', height: '36px', backgroundColor: 'var(--color-cc-fire)' }}
+                aria-label="Stop recording"
+              >
+                <span className="block rounded-sm" style={{ width: '12px', height: '12px', backgroundColor: '#fff' }} />
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* ═══ TRANSCRIBING ═══ */}
       {state === 'transcribing' && (
-        <div className="p-5 flex flex-col items-center justify-center gap-3">
-          <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-cc-border)', borderTopColor: 'var(--color-cc-text-secondary)' }} />
-          <span className="text-[13px]" style={{ color: 'var(--color-cc-text-secondary)' }}>Transcribing voice...</span>
+        <div className="px-4 py-4 flex items-center gap-3">
+          <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: 'rgba(0,0,0,0.08)', borderTopColor: 'var(--color-cc-text-secondary)' }} />
+          <span className="text-[13px]" style={{ color: 'var(--color-cc-text-muted)' }}>Transcribing...</span>
         </div>
       )}
 
       {/* ═══ THINKING ═══ */}
       {state === 'thinking' && (
-        <>
-          {voiceSource && text && (
-            <div className="flex items-start gap-2 px-4 pt-3 pb-0">
-              <div className="flex items-start gap-2 px-3 py-2 rounded-xl w-full" style={{ backgroundColor: 'var(--color-cc-surface)' }}>
-                <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ color: 'var(--color-cc-text-dim)' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-                </svg>
-                <p className="text-[12px] leading-relaxed line-clamp-2" style={{ color: 'var(--color-cc-text-dim)' }}>{text}</p>
-              </div>
-            </div>
-          )}
-          <AgentThinkingSkeleton />
-        </>
+        <div className="px-4 py-4 flex items-center gap-3">
+          <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: 'rgba(0,0,0,0.08)', borderTopColor: 'var(--color-cc-accent)' }} />
+          <span className="text-[13px] truncate" style={{ color: 'var(--color-cc-text-muted)' }}>
+            {voiceSource && text ? text : 'Thinking...'}
+          </span>
+        </div>
       )}
 
       {/* ═══ COMMAND PREVIEW (also follow_up_preview) ═══ */}
@@ -616,7 +650,7 @@ export function AgentInput() {
                     </svg>
                   )}
                 </div>
-                <p className="text-[13px] leading-snug mt-0.5" style={{ color: 'var(--color-cc-text-secondary)' }}>
+                <p className="text-[14px] leading-snug mt-0.5" style={{ color: 'var(--color-cc-text-secondary)' }}>
                   {commandInterpretation}
                 </p>
               </div>
@@ -627,14 +661,14 @@ export function AgentInput() {
 
           {/* Command details */}
           <div className="px-4 py-3">
-            <div className="px-3 py-2.5 rounded-xl text-[13px] space-y-1" style={{ backgroundColor: 'var(--color-cc-surface-elevated)', color: 'var(--color-cc-text-secondary)' }}>
+            <div className="px-3 py-3 rounded-xl text-[14px] space-y-1.5" style={{ backgroundColor: 'var(--color-cc-bg)', color: 'var(--color-cc-text-secondary)' }}>
               {Object.entries(commandPayload)
                 .filter(([k]) => k !== 'intent')
                 .filter(([, v]) => v !== null && v !== undefined && v !== '')
                 .map(([k, v]) => (
                   <div key={k} className="flex items-start gap-2">
                     <span className="text-[11px] uppercase tracking-wider w-20 flex-shrink-0 pt-0.5" style={{ color: 'var(--color-cc-text-muted)' }}>{k}</span>
-                    <span className="text-[13px]" style={{ color: 'var(--color-cc-text)' }}>
+                    <span className="text-[14px]" style={{ color: 'var(--color-cc-text)' }}>
                       {Array.isArray(v) ? v.join(', ') : String(v)}
                     </span>
                   </div>
@@ -646,8 +680,8 @@ export function AgentInput() {
           <div className="px-4 pb-4 flex items-center gap-2">
             <button
               onClick={handleCommandConfirm}
-              className="flex-1 text-[14px] font-semibold rounded-xl transition-all active:scale-[0.98]"
-              style={{ backgroundColor: COMMAND_INTENT_META[commandPayload.intent]?.color ?? 'var(--color-cc-accent)', color: '#fff', height: '48px' }}
+              className="flex-1 text-[15px] font-semibold rounded-xl transition-all active:scale-[0.98]"
+              style={{ backgroundColor: COMMAND_INTENT_META[commandPayload.intent]?.color ?? 'var(--color-cc-accent)', color: '#fff', height: '50px' }}
             >
               {COMMAND_INTENT_META[commandPayload.intent]?.confirmLabel ?? 'Execute'}
             </button>
@@ -935,16 +969,16 @@ export function AgentInput() {
 
       {/* ═══ EXECUTING ═══ */}
       {state === 'executing' && (
-        <div className="p-5 flex flex-col items-center justify-center gap-3">
-          <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-cc-border)', borderTopColor: commandPayload ? (COMMAND_INTENT_META[commandPayload.intent]?.color ?? 'var(--color-cc-accent)') : 'var(--color-cc-accent)' }} />
-          <span className="text-[13px]" style={{ color: 'var(--color-cc-text-secondary)' }}>
+        <div className="px-4 py-4 flex items-center gap-3">
+          <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: 'rgba(0,0,0,0.08)', borderTopColor: commandPayload ? (COMMAND_INTENT_META[commandPayload.intent]?.color ?? 'var(--color-cc-accent)') : 'var(--color-cc-accent)' }} />
+          <span className="text-[13px]" style={{ color: 'var(--color-cc-text-muted)' }}>
             {commandPayload
               ? (COMMAND_INTENT_META[commandPayload.intent]?.label === 'Navigate' ? 'Navigating...'
                 : `${COMMAND_INTENT_META[commandPayload.intent]?.confirmLabel ?? 'Processing'}...`)
               : draft
-              ? (draft.classification === 'note' ? 'Saving note...'
-                : draft.classification === 'message' ? 'Sending message...'
-                : draft.classification === 'collaborator' ? 'Adding collaborator...'
+              ? (draft.classification === 'note' ? 'Saving...'
+                : draft.classification === 'message' ? 'Sending...'
+                : draft.classification === 'collaborator' ? 'Adding...'
                 : 'Saving...')
               : multiSteps.length > 0
               ? `Executing ${multiSteps.length} steps...`
@@ -955,13 +989,181 @@ export function AgentInput() {
 
       {/* ═══ DONE ═══ */}
       {state === 'done' && (
-        <div className="p-5 flex flex-col items-center justify-center gap-2">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#22c55e1a' }}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#22c55e">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
+        <div className="p-4">
+          {/* Result card */}
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{
+              backgroundColor: commandResult
+                ? (COMMAND_INTENT_META[commandResult.intent]?.color ?? '#22c55e') + '1a'
+                : '#22c55e1a'
+            }}>
+              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke={
+                commandResult ? (COMMAND_INTENT_META[commandResult.intent]?.color ?? '#22c55e') : '#22c55e'
+              }>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[12px] font-bold uppercase tracking-wider" style={{
+                color: commandResult ? (COMMAND_INTENT_META[commandResult.intent]?.color ?? '#22c55e') : '#22c55e'
+              }}>
+                {doneMessage}
+              </span>
+              {/* Entity name as clickable link */}
+              {commandResult && 'entityName' in commandResult && commandResult.entityName && (
+                <p className="text-[15px] font-medium mt-0.5 truncate" style={{ color: 'var(--color-cc-text)' }}>
+                  {'entityLink' in commandResult && commandResult.entityLink ? (
+                    <button
+                      onClick={() => { router.push((commandResult as any).entityLink); softReset() }}
+                      className="hover:underline text-left truncate block w-full"
+                      style={{ color: 'var(--color-cc-accent)' }}
+                    >
+                      {commandResult.entityName}
+                    </button>
+                  ) : (
+                    commandResult.entityName
+                  )}
+                </p>
+              )}
+              {/* Context: project, assignee, updated fields */}
+              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                {commandResult && 'projectName' in commandResult && (commandResult as any).projectName && (
+                  <span className="text-[12px] px-2 py-0.5 rounded-full" style={{
+                    backgroundColor: 'var(--color-cc-surface-elevated)',
+                    color: 'var(--color-cc-text-secondary)',
+                  }}>
+                    {(commandResult as any).projectName}
+                  </span>
+                )}
+                {commandResult && 'assigneeName' in commandResult && (commandResult as any).assigneeName && (
+                  <span className="text-[12px] px-2 py-0.5 rounded-full" style={{
+                    backgroundColor: 'var(--color-cc-surface-elevated)',
+                    color: 'var(--color-cc-text-secondary)',
+                  }}>
+                    {(commandResult as any).assigneeName}
+                  </span>
+                )}
+                {commandResult && 'updatedFields' in commandResult && (commandResult as any).updatedFields?.length > 0 && (
+                  <span className="text-[12px]" style={{ color: 'var(--color-cc-text-muted)' }}>
+                    Changed: {(commandResult as any).updatedFields.join(', ')}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          <span className="text-[14px] font-medium" style={{ color: 'var(--color-cc-text)' }}>{doneMessage}</span>
+          {/* AI Suggestion pills */}
+          {suggestions.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-2" style={{ borderTop: '1px solid var(--color-cc-border-subtle)' }}>
+              {suggestions.slice(0, 3).map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (s.actionHint) {
+                      setCommandPayload(s.actionHint)
+                      setCommandInterpretation(s.message)
+                      setState('command_preview')
+                    } else {
+                      setText(s.message)
+                      submitText(s.message)
+                    }
+                  }}
+                  className="text-[12px] font-medium px-3 py-2 rounded-xl transition-all active:scale-[0.96]"
+                  style={{
+                    backgroundColor: 'var(--color-cc-surface-elevated)',
+                    color: 'var(--color-cc-accent)',
+                  }}
+                >
+                  {s.message}
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Continuous flow — inline input in done state */}
+          <div className="pt-2" style={{ borderTop: '1px solid var(--color-cc-border-subtle)' }}>
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={inputRef}
+                value={text}
+                onChange={handleTextChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    if (text.trim()) {
+                      if (doneTimerRef.current) { clearTimeout(doneTimerRef.current); doneTimerRef.current = null }
+                      softReset()
+                      setTimeout(() => submitText(text.trim()), 50)
+                    }
+                  }
+                }}
+                placeholder={getContextualPlaceholder(sessionSnapshot, commandResult)}
+                rows={1}
+                className="flex-1 bg-transparent text-[14px] leading-relaxed placeholder:text-[var(--color-cc-text-dim)] resize-none outline-none py-1"
+                style={{ color: 'var(--color-cc-text)', minHeight: '28px' }}
+              />
+              <button
+                onClick={() => {
+                  if (text.trim()) {
+                    if (doneTimerRef.current) { clearTimeout(doneTimerRef.current); doneTimerRef.current = null }
+                    const inputText = text.trim()
+                    softReset()
+                    setTimeout(() => submitText(inputText), 50)
+                  }
+                }}
+                disabled={!text.trim()}
+                className="flex items-center justify-center rounded-full transition-all disabled:opacity-0 active:scale-[0.90] flex-shrink-0"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  backgroundColor: text.trim() ? 'var(--color-cc-accent)' : 'transparent',
+                  color: '#fff',
+                }}
+                aria-label="Send follow-up"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          {/* Continuity — deterministic next actions */}
+          {nextActions.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-2" style={{
+              borderTop: suggestions.length > 0 ? 'none' : '1px solid var(--color-cc-border-subtle)',
+            }}>
+              {nextActions.map((action, i) => (
+                <button
+                  key={`na-${i}`}
+                  onClick={() => {
+                    if (doneTimerRef.current) { clearTimeout(doneTimerRef.current); doneTimerRef.current = null }
+                    if (action.autoSubmit) {
+                      softReset()
+                      setTimeout(() => {
+                        setText(action.command)
+                        submitText(action.command)
+                      }, 50)
+                    } else {
+                      softReset()
+                      setTimeout(() => {
+                        setText(action.command)
+                        if (inputRef.current) {
+                          inputRef.current.focus()
+                          inputRef.current.setSelectionRange(action.command.length, action.command.length)
+                        }
+                      }, 50)
+                    }
+                  }}
+                  className="text-[12px] font-medium px-3 py-2 rounded-xl transition-all active:scale-[0.96]"
+                  style={{
+                    backgroundColor: 'var(--color-cc-surface-elevated)',
+                    color: 'var(--color-cc-text)',
+                    border: '1px solid var(--color-cc-border-subtle)',
+                  }}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -28,6 +28,26 @@ export async function getPeople(workspaceId: string) {
         take: 1,
         select: { createdAt: true, content: true },
       },
+      collaboratorProfile: {
+        select: {
+          role: true,
+          skills: true,
+          strengths: true,
+          availability: true,
+        },
+      },
+      user: {
+        select: {
+          id: true,
+          projectMembers: {
+            include: {
+              project: {
+                select: { id: true, name: true, status: true },
+              },
+            },
+          },
+        },
+      },
     },
     orderBy: { updatedAt: 'desc' },
   })

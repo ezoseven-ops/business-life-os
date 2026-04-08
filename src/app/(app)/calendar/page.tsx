@@ -80,7 +80,7 @@ export default async function CalendarPage() {
                   {dateEvents.map((event: Record<string, unknown>) => (
                     <Link
                       key={event.id as string}
-                      href={`/calendar/${event.id as string}`}
+                      href={`/events/${event.id as string}?from=calendar`}
                       className="card p-4 block"
                     >
                       <div className="flex items-start gap-3">

@@ -1,11 +1,16 @@
 import { auth } from '@/lib/auth'
 import { Header } from '@/components/Header'
 import { getProjectById, getProjectActivity } from '@/modules/projects/project.queries'
+import { getEventsByProject } from '@/modules/events/event.service'
+import { EventTime } from '@/modules/events/components/EventTime'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { TaskCheckbox } from '@/modules/tasks/components/TaskCheckbox'
 import { PhaseIndicator } from '@/modules/projects/components/PhaseIndicator'
+import { ProjectMemberManager } from '@/modules/projects/components/ProjectMemberManager'
+import ProjectPeopleManager from "@/modules/projects/components/ProjectPeopleManager"
+import { getAvailablePeople } from "@/modules/projects/project-person.service"
 
 const statusLabel: Record<string, { text: string; color: string; bg: string }> = {
   ACTIVE: { text: 'Active', color: '#2dd882', bg: 'rgba(45,216,130,0.12)' },
@@ -121,6 +126,7 @@ export default async function ProjectDetailPage({
   const { tab: rawTab } = await searchParams
 
   const project = await getProjectById(id, session.user.workspaceId)
+  const availablePeople = await getAvailablePeople(id, session.user.workspaceId)
   if (!project) notFound()
 
   const activeTab: Tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : 'tasks'
@@ -128,6 +134,10 @@ export default async function ProjectDetailPage({
   const activities = activeTab === 'activity'
     ? await getProjectActivity(id, 20)
     : []
+
+  const now = new Date()
+  const allProjectEvents = await getEventsByProject(id, session.user.workspaceId)
+  const upcomingEvents = allProjectEvents.filter((e) => new Date(e.startAt) >= now)
 
   const activeTasks = project.tasks.filter((t) => t.status !== 'DONE')
   const doneTasks = project.tasks.filter((t) => t.status === 'DONE')
@@ -142,7 +152,7 @@ export default async function ProjectDetailPage({
   }
 
   return (
-    <div className="min-h-dvh" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
+    <>
       <Header
         title={project.name}
         backHref="/projects"
@@ -153,7 +163,7 @@ export default async function ProjectDetailPage({
         }
       />
 
-      <div className="px-4 py-4 max-w-lg mx-auto space-y-5 pb-24">
+      <div className="px-4 py-4 max-w-lg mx-auto space-y-5 pb-4">
         {/* Project header card */}
         <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="flex items-start justify-between gap-3 mb-3">
@@ -201,6 +211,72 @@ export default async function ProjectDetailPage({
           </div>
         </div>
 
+        {/* Members — interactive management */}
+        <ProjectMemberManager
+          projectId={project.id}
+          members={project.projectMembers as any}
+          canEdit={session.user.role === 'OWNER' || session.user.role === 'TEAM'}
+        />
+
+        {/* People — non-user associations */}
+        <ProjectPeopleManager
+          projectId={project.id}
+          projectPeople={(project.projectPeople ?? []) as any}
+          availablePeople={availablePeople as any}
+          canManage={session.user.role === 'OWNER' || session.user.role === 'TEAM'}
+        />
+
+        {/* Upcoming Events */}
+        <section>
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: '#a0a0b8' }}>Upcoming Events</h3>
+              {upcomingEvents.length > 0 && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: '#6b6b85', backgroundColor: 'rgba(255,255,255,0.06)' }}>{upcomingEvents.length}</span>
+              )}
+            </div>
+            <Link
+              href={`/calendar/new?projectId=${id}`}
+              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors"
+              style={{ color: '#7c6ef6' }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Event
+            </Link>
+          </div>
+          {upcomingEvents.length > 0 ? (
+            <div className="space-y-2">
+              {upcomingEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  href={`/events/${event.id}?from=project`}
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <div className="w-10 h-10 rounded-xl flex flex-col items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(124,110,246,0.12)' }}>
+                    <EventTime date={event.startAt} format="month-short" className="text-[10px] font-bold uppercase leading-none" style={{ color: '#7c6ef6' }} />
+                    <EventTime date={event.startAt} format="day" className="text-sm font-bold leading-none mt-0.5" style={{ color: '#7c6ef6' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: '#f0f0f5' }}>{event.title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#6b6b85' }}>
+                      <EventTime date={event.startAt} format="time" />
+                      {event.endAt && <EventTime date={event.endAt} format="time" prefix=" – " />}
+                    </p>
+                  </div>
+                  <svg className="w-4 h-4 flex-shrink-0" style={{ color: '#6b6b85' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-center py-4" style={{ color: '#6b6b85' }}>No upcoming events</p>
+          )}
+        </section>
+
         {/* Tab navigation */}
         <div className="flex gap-1.5 p-1 rounded-xl" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
           {TABS.map((t) => {
@@ -238,7 +314,7 @@ export default async function ProjectDetailPage({
                   {activeTasks.map((task) => {
                     const ps = priorityStyles[task.priority] || priorityStyles.LOW
                     return (
-                      <div key={task.id} className="flex items-center gap-3 px-4 py-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <Link key={task.id} href={`/tasks/${task.id}`} className="flex items-center gap-3 px-4 py-3.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <TaskCheckbox taskId={task.id} status={task.status} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate" style={{ color: '#f0f0f5' }}>{task.title}</p>
@@ -253,7 +329,7 @@ export default async function ProjectDetailPage({
                           </div>
                         </div>
                         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: ps.bg, color: ps.color }}>{task.priority}</span>
-                      </div>
+                      </Link>
                     )
                   })}
                 </div>
@@ -375,7 +451,7 @@ export default async function ProjectDetailPage({
           </>
         )}
       </div>
-    </div>
+    </>
   )
 }
 

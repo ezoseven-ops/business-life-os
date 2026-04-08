@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { InlineError } from '@/components/ErrorStates'
 import { createEventAction } from '@/modules/events/event.actions'
@@ -22,6 +22,8 @@ function getDefaultEndDate() {
 
 export default function NewEventPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const projectId = searchParams.get("projectId")
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [startAt, setStartAt] = useState(getDefaultDate())
@@ -43,9 +45,10 @@ export default function NewEventPage() {
         endAt: endAt ? (allDay ? new Date(endAt + 'T23:59:59') : new Date(endAt)) : undefined,
         allDay,
         location: location.trim() || undefined,
+        projectId: projectId || undefined,
       })
       if (result.success) {
-        router.push('/calendar')
+        router.push(projectId ? "/projects/" + projectId : '/calendar')
         router.refresh()
       } else {
         setError(result.error || 'Failed to create event')
@@ -61,7 +64,7 @@ export default function NewEventPage() {
     <div className="min-h-dvh bg-white">
       <Header
         title="New Event"
-        backHref="/calendar"
+        backHref={projectId ? "/projects/" + projectId : '/calendar'}
         action={
           <button
             onClick={handleSave}

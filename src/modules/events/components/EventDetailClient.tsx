@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateEventAction, deleteEventAction } from '@/modules/events/event.actions'
 import { InlineError } from '@/components/ErrorStates'
@@ -52,6 +52,9 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
   const [deleting, setDeleting] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [error, setError] = useState('')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   async function handleSave() {
     if (!title.trim() || saving) return
@@ -213,9 +216,9 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
               <div className="text-sm text-gray-700">
-                <p>{formatDateTime(event.startAt, event.allDay)}</p>
+                <p>{mounted ? formatDateTime(event.startAt, event.allDay) : '\u00A0'}</p>
                 {event.endAt && (
-                  <p className="text-gray-400">to {formatDateTime(event.endAt, event.allDay)}</p>
+                  <p className="text-gray-400">{mounted ? `to ${formatDateTime(event.endAt, event.allDay)}` : '\u00A0'}</p>
                 )}
               </div>
             </div>

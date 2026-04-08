@@ -295,7 +295,7 @@ export async function getFailedSyncEntries(
 
   const eventMap = new Map(events.map(e => [e.id, e.title]))
 
-  return failedEntries.map((entry) => ({
+  return failedEntries.map((entry: any) => ({
     id: entry.id,
     eventId: entry.eventId,
     eventTitle: eventMap.get(entry.eventId) ?? 'Unknown event',

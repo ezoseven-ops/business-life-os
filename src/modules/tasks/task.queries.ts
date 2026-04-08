@@ -3,6 +3,7 @@ import type { TaskStatus } from '@prisma/client'
 
 const taskInclude = {
   assignee: { select: { id: true, name: true, avatarUrl: true } },
+  assigneePerson: { select: { id: true, name: true, email: true, company: true } },
   creator: { select: { id: true, name: true } },
   project: { select: { id: true, name: true } },
   _count: { select: { comments: true, files: true } },

@@ -7,6 +7,7 @@ export const createTaskSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
   dueDate: z.coerce.date().optional(),
   assigneeId: z.string().min(1).optional(),
+  assigneePersonId: z.string().min(1).optional(),
 })
 
 export const updateTaskSchema = z.object({
@@ -15,7 +16,9 @@ export const updateTaskSchema = z.object({
   status: z.enum(['TODO', 'IN_PROGRESS', 'WAITING', 'DONE']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
   dueDate: z.coerce.date().nullable().optional(),
-  assigneeId: z.string().min(1).nullable().optional(),
+  assigneeId: z.string().nullable().optional(),
+  assigneePersonId: z.string().nullable().optional(),
+  scheduledDate: z.coerce.date().nullable().optional(),
 })
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>

@@ -17,45 +17,40 @@ export default async function TaskDetailPage({
   const task = await getTaskById(id, session.user.workspaceId)
   if (!task) return notFound()
 
-  // Query workspace Users (not People) for assignee dropdown
+  // Query workspace Users for assignee dropdown
   const workspaceUsers = await prisma.user.findMany({
     where: { workspaceId: session.user.workspaceId },
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   })
 
-  return (
-    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
-      <Header title="Task" backHref="/tasks" />
+  // Query project people (Persons attached to this task's project)
+  const projectPeople = await prisma.projectPerson.findMany({
+    where: { projectId: task.projectId },
+    include: {
+      person: {
+        select: { id: true, name: true, email: true, company: true },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  })
 
-      <div className="px-4 py-4 max-w-lg mx-auto pb-24">
-        <TaskDetailClient
-          task={{
-            id: task.id,
-            title: task.title,
-            description: task.description,
-            status: task.status,
-            priority: task.priority,
-            dueDate: task.dueDate?.toISOString() || null,
-            assigneeId: task.assigneeId,
-            projectId: task.projectId,
-            projectName: task.project.name,
-            assigneeName: task.assignee?.name || null,
-            creatorName: task.creator.name || 'Unknown',
-            createdAt: task.createdAt.toISOString(),
-            sourceMessageId: task.sourceMessageId || null,
-            sourcePersonName: task.sourceMessage?.person?.name || null,
-            sourcePersonId: task.sourceMessage?.person?.id || null,
-            comments: task.comments.map(c => ({
-              id: c.id,
-              content: c.content,
-              authorName: c.author.name || 'Unknown',
-              createdAt: c.createdAt.toISOString(),
-            })),
-          }}
-          users={workspaceUsers.map(u => ({ id: u.id, name: u.name || 'Unnamed' }))}
-        />
-      </div>
-    </div>
+  const projectPersons = projectPeople.map((pp) => ({
+    id: pp.person.id,
+    name: pp.person.name ?? "",
+    email: pp.person.email,
+    company: pp.person.company,
+  }))
+
+  return (
+    <>
+      <Header title={task.title} backHref={`/projects/${task.projectId}`} />
+      <TaskDetailClient
+        task={task as any}
+        workspaceUsers={workspaceUsers.map(u => ({ id: u.id, name: u.name ?? "" }))}
+        projectPersons={projectPersons}
+        currentUserId={session.user.id}
+      />
+    </>
   )
 }

@@ -68,6 +68,14 @@ export async function updateTaskAction(id: string, input: unknown) {
       return task
     }
 
+    // Enforce mutual exclusivity: User assignee vs Person assignee
+    if (validated.assigneeId !== undefined && validated.assigneeId !== null) {
+      validated.assigneePersonId = null
+    }
+    if (validated.assigneePersonId !== undefined && validated.assigneePersonId !== null) {
+      validated.assigneeId = null
+    }
+
     const task = await taskService.updateTask(id, validated)
 
     if (validated.status && validated.status !== oldTask.status) {
@@ -87,6 +95,11 @@ export async function updateTaskAction(id: string, input: unknown) {
           linkUrl: `/tasks/${id}`,
         })
       }
+    } else if (validated.assigneePersonId !== undefined) {
+      await logActivity('ASSIGNED', 'TASK', id, session.user.id, {
+        assigneePersonId: validated.assigneePersonId,
+        assigneeType: 'person',
+      })
     } else {
       await logActivity('UPDATED', 'TASK', id, session.user.id)
     }

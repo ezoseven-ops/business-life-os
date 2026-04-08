@@ -7,28 +7,18 @@ import { InlineError } from '@/components/ErrorStates'
 import { addCommentAction } from '@/modules/comments/comment.actions'
 import { formatRelativeTime } from '@/lib/utils'
 
-interface TaskData {
+interface ProjectPerson {
   id: string
-  title: string
-  description: string | null
-  status: string
-  priority: string
-  dueDate: string | null
-  assigneeId: string | null
-  projectId: string
-  projectName: string
-  assigneeName: string | null
-  creatorName: string
-  createdAt: string
-  sourceMessageId: string | null
-  sourcePersonName: string | null
-  sourcePersonId: string | null
-  comments: { id: string; content: string; authorName: string; createdAt: string }[]
+  name: string
+  email: string | null
+  company: string | null
 }
 
 interface Props {
-  task: TaskData
-  users: { id: string; name: string }[]
+  task: any
+  workspaceUsers: { id: string; name: string }[]
+  projectPersons: ProjectPerson[]
+  currentUserId: string
 }
 
 const statusOptions = [
@@ -45,7 +35,7 @@ const priorityOptions = [
   { value: 'URGENT', label: 'Urgent', color: 'bg-red-50 text-red-600' },
 ]
 
-export function TaskDetailClient({ task, users }: Props) {
+export function TaskDetailClient({ task, workspaceUsers, projectPersons, currentUserId }: Props) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -61,6 +51,29 @@ export function TaskDetailClient({ task, users }: Props) {
       else router.refresh()
     } catch {
       setError('Failed to update')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleAssigneeChange(compositeValue: string) {
+    setSaving(true)
+    setError('')
+    try {
+      let result
+      if (!compositeValue) {
+        result = await updateTaskAction(task.id, { assigneeId: null, assigneePersonId: null })
+      } else if (compositeValue.startsWith('user:')) {
+        const userId = compositeValue.replace('user:', '')
+        result = await updateTaskAction(task.id, { assigneeId: userId })
+      } else if (compositeValue.startsWith('person:')) {
+        const personId = compositeValue.replace('person:', '')
+        result = await updateTaskAction(task.id, { assigneePersonId: personId })
+      }
+      if (result && !result.success) setError(result.error || 'Failed to update assignee')
+      else router.refresh()
+    } catch {
+      setError('Failed to update assignee')
     } finally {
       setSaving(false)
     }
@@ -85,8 +98,24 @@ export function TaskDetailClient({ task, users }: Props) {
     }
   }
 
-  const currentStatus = statusOptions.find(s => s.value === task.status)
-  const currentPriority = priorityOptions.find(p => p.value === task.priority)
+  // Compute composite assignee value
+  function getAssigneeValue(): string {
+    if (task.assigneeId) return 'user:' + task.assigneeId
+    if (task.assigneePersonId) return 'person:' + task.assigneePersonId
+    return ''
+  }
+
+  // Get assignee display info
+  const isPersonAssignee = !!(task.assigneePersonId && task.assigneePerson)
+  const isUserAssignee = !!(task.assigneeId && task.assignee)
+  const assigneeName = isUserAssignee
+    ? task.assignee.name
+    : isPersonAssignee
+      ? task.assigneePerson.name
+      : null
+  const assigneeDetail = isPersonAssignee
+    ? [task.assigneePerson.email, task.assigneePerson.company].filter(Boolean).join(' · ')
+    : null
 
   return (
     <div className="space-y-4">
@@ -94,14 +123,13 @@ export function TaskDetailClient({ task, users }: Props) {
       <div className="card p-5">
         <h2 className="text-lg font-bold text-gray-900 mb-1">{task.title}</h2>
         {task.description && (
-          <p className="text-sm text-gray-600 whitespace-pre-wrap">{task.description}</p>
+          <p className="text-sm text-gray-500">{task.description}</p>
         )}
         <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
-          <span>{task.projectName}</span>
-          <span>&middot;</span>
-          <span>by {task.creatorName}</span>
+          <span>Created by {task.creator?.name || 'Unknown'}</span>
           <span>&middot;</span>
           <span>{formatRelativeTime(task.createdAt)}</span>
+          {saving && <span className="ml-auto text-blue-500">Saving...</span>}
         </div>
       </div>
 
@@ -109,20 +137,17 @@ export function TaskDetailClient({ task, users }: Props) {
       {task.sourceMessageId && (
         <div className="card p-4 border-l-4 border-l-blue-400">
           <div className="flex items-center gap-2 mb-1">
-            <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375" />
-            </svg>
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-500">Created from conversation</span>
+            <span className="text-xs font-semibold text-blue-600">Created from conversation</span>
           </div>
-          {task.sourcePersonName && task.sourcePersonId && (
-            <a href={`/inbox/${task.sourcePersonId}`} className="text-sm text-primary font-medium hover:underline">
-              View thread with {task.sourcePersonName}
-            </a>
+          {task.sourcePersonName && (
+            <p className="text-xs text-gray-500">
+              From conversation with <span className="font-medium text-gray-700">{task.sourcePersonName}</span>
+            </p>
           )}
         </div>
       )}
 
-      <InlineError message={error} />
+      {error && <InlineError message={error} />}
 
       {/* Status */}
       <div className="card p-4">
@@ -135,7 +160,7 @@ export function TaskDetailClient({ task, users }: Props) {
               disabled={saving}
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
                 task.status === s.value
-                  ? s.color + ' ring-2 ring-offset-1 ring-gray-300'
+                  ? s.color + ' ring-2 ring-offset-1 ring-current'
                   : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
               }`}
             >
@@ -156,7 +181,7 @@ export function TaskDetailClient({ task, users }: Props) {
               disabled={saving}
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
                 task.priority === p.value
-                  ? p.color + ' ring-2 ring-offset-1 ring-gray-300'
+                  ? p.color + ' ring-2 ring-offset-1 ring-current'
                   : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
               }`}
             >
@@ -168,18 +193,41 @@ export function TaskDetailClient({ task, users }: Props) {
 
       {/* Assignee */}
       <div className="card p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">Assignee</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">
+          Assignee
+          {isPersonAssignee && (
+            <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: '#fef3c7', color: '#92400e' }}>
+              External
+            </span>
+          )}
+        </label>
         <select
-          value={task.assigneeId || ''}
-          onChange={(e) => updateField('assigneeId', e.target.value || null)}
+          value={getAssigneeValue()}
+          onChange={(e) => handleAssigneeChange(e.target.value)}
           disabled={saving}
-          className="w-full text-sm bg-gray-50 rounded-xl px-3 py-2.5 outline-none border border-gray-200 focus:border-primary"
+          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700"
         >
           <option value="">Unassigned</option>
-          {users.map(u => (
-            <option key={u.id} value={u.id}>{u.name}</option>
-          ))}
+          {workspaceUsers.length > 0 && (
+            <optgroup label="Team Members">
+              {workspaceUsers.map(u => (
+                <option key={'user:' + u.id} value={'user:' + u.id}>{u.name}</option>
+              ))}
+            </optgroup>
+          )}
+          {projectPersons.length > 0 && (
+            <optgroup label="Project People (External)">
+              {projectPersons.map(p => (
+                <option key={'person:' + p.id} value={'person:' + p.id}>
+                  {p.name}{p.company ? ` (${p.company})` : ''}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
+        {isPersonAssignee && assigneeDetail && (
+          <p className="text-xs text-gray-400 mt-1">{assigneeDetail}</p>
+        )}
       </div>
 
       {/* Due Date */}
@@ -187,25 +235,39 @@ export function TaskDetailClient({ task, users }: Props) {
         <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">Due Date</label>
         <input
           type="date"
-          value={task.dueDate ? task.dueDate.split('T')[0] : ''}
+          value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
           onChange={(e) => updateField('dueDate', e.target.value || null)}
           disabled={saving}
-          className="w-full text-sm bg-gray-50 rounded-xl px-3 py-2.5 outline-none border border-gray-200 focus:border-primary"
+          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700"
         />
+      </div>
+
+      {/* Scheduled Date (Calendar Readiness) */}
+      <div className="card p-4">
+        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">
+          Scheduled Date <span className="normal-case font-normal">(do on)</span>
+        </label>
+        <input
+          type="date"
+          value={task.scheduledDate ? new Date(task.scheduledDate).toISOString().split('T')[0] : ''}
+          onChange={(e) => updateField('scheduledDate', e.target.value || null)}
+          disabled={saving}
+          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700"
+        />
+        <p className="text-xs text-gray-400 mt-1">When you plan to work on this task (for calendar sync)</p>
       </div>
 
       {/* Comments */}
       <div className="card p-4">
         <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 block">
-          Comments ({task.comments.length})
+          Comments ({task.comments?.length || 0})
         </label>
-
-        {task.comments.length > 0 && (
+        {task.comments?.length > 0 && (
           <div className="space-y-3 mb-4">
-            {task.comments.map(c => (
+            {task.comments.map((c: any) => (
               <div key={c.id} className="bg-gray-50 rounded-xl px-3 py-2.5">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-gray-700">{c.authorName}</span>
+                  <span className="text-xs font-semibold text-gray-700">{c.author?.name || 'Unknown'}</span>
                   <span className="text-[10px] text-gray-400">{formatRelativeTime(c.createdAt)}</span>
                 </div>
                 <p className="text-sm text-gray-600">{c.content}</p>
@@ -213,22 +275,20 @@ export function TaskDetailClient({ task, users }: Props) {
             ))}
           </div>
         )}
-
-        <div className="flex items-end gap-2">
+        <div className="flex gap-2">
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Add a comment..."
             rows={2}
-            className="flex-1 text-sm bg-gray-50 rounded-xl px-3 py-2 outline-none resize-none border border-gray-200 focus:border-primary"
-            disabled={commentSaving}
+            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 resize-none"
           />
           <button
             onClick={handleAddComment}
-            disabled={!commentText.trim() || commentSaving}
-            className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold disabled:opacity-40"
+            disabled={commentSaving || !commentText.trim()}
+            className="self-end bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
           >
-            Post
+            {commentSaving ? '...' : 'Send'}
           </button>
         </div>
       </div>

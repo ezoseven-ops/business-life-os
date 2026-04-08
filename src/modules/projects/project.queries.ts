@@ -31,6 +31,7 @@ export async function getProjectById(id: string, workspaceId: string) {
         take: 50,
         include: {
           assignee: { select: { id: true, name: true, avatarUrl: true } },
+            assigneePerson: { select: { id: true, name: true, email: true } },
         },
       },
       notes: {
@@ -39,6 +40,38 @@ export async function getProjectById(id: string, workspaceId: string) {
         include: {
           author: { select: { id: true, name: true } },
         },
+      },
+      projectMembers: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatarUrl: true,
+              linkedPerson: { select: { id: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+      projectPeople: {
+        include: {
+          person: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              company: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+      events: {
+        where: { startAt: { gte: new Date() } },
+        orderBy: { startAt: 'asc' },
+        take: 10,
+        select: { id: true, title: true, startAt: true, endAt: true, allDay: true, location: true },
       },
       _count: { select: { tasks: true, notes: true } },
     },

@@ -153,6 +153,7 @@ model Project {
   notes          Note[]
   events         Event[]
   projectMembers ProjectMember[]
+  projectPeople  ProjectPerson[]
 
   @@index([workspaceId])
   @@index([workspaceId, status])
@@ -192,12 +193,16 @@ model Task {
   sourceMessageId  String?
   projectId        String
   assigneeId       String?
+  assigneePersonId String?
+  scheduledDate    DateTime?
+  calendarTaskUri  String?
   creatorId        String
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
   project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee       User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  assigneePerson Person?   @relation("TaskAssigneePerson", fields: [assigneePersonId], references: [id])
   creator        User      @relation("TaskCreator", fields: [creatorId], references: [id])
   sourceMessage  Message?  @relation(fields: [sourceMessageId], references: [id])
   comments       Comment[]
@@ -205,6 +210,8 @@ model Task {
 
   @@index([projectId])
   @@index([assigneeId])
+  @@index([assigneePersonId])
+  @@index([scheduledDate])
   @@index([status])
   @@index([projectId, status])
   @@index([dueDate])
@@ -296,6 +303,8 @@ model Person {
   workspace           Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   messages            Message[]
   collaboratorProfile CollaboratorProfile?
+  projectPeople        ProjectPerson[]
+  assignedTasks        Task[]               @relation("TaskAssigneePerson")
 
   @@index([workspaceId])
   @@index([telegramId])
@@ -678,4 +687,20 @@ enum SyncStatus {
   PENDING
   SUCCESS
   FAILED
+}
+
+// ——— PROJECT PEOPLE (non-user associations) ———
+model ProjectPerson {
+  id        String   @id @default(cuid())
+  role      String?
+  personId  String
+  projectId String
+  createdAt DateTime @default(now())
+
+  person    Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, projectId])
+  @@index([projectId])
+  @@index([personId])
 }

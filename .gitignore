@@ -60,3 +60,7 @@ DELIVERY_PLAN.md
 SYSTEM_AUDIT.md
 MASTER_PROMPT.md
 DEPLOYMENT-READINESS-REPORT.md
+
+# backups and scratch files
+backup_20260405_pre_schema_sync.dump
+public/_src/

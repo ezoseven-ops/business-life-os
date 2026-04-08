@@ -182,16 +182,16 @@ export type CommandParseResult = z.infer<typeof commandParseResultSchema>
 
 export type CommandResult =
   | { intent: 'navigate'; path: string }
-  | { intent: 'create_task'; taskId: string; projectId: string }
-  | { intent: 'assign_task'; taskId: string; assigneeId: string }
-  | { intent: 'complete_task'; taskId: string }
-  | { intent: 'create_project'; projectId: string }
-  | { intent: 'add_member'; projectId: string; userId: string }
-  | { intent: 'create_event'; eventId: string }
-  | { intent: 'save_note'; noteId: string; projectId: string | null }
-  | { intent: 'update_task'; taskId: string; updatedFields: string[] }
-  | { intent: 'update_event'; eventId: string; updatedFields: string[] }
-  | { intent: 'update_project'; projectId: string; updatedFields: string[] }
+  | { intent: 'create_task'; taskId: string; projectId: string; entityName?: string; projectName?: string }
+  | { intent: 'assign_task'; taskId: string; assigneeId: string; entityName?: string }
+  | { intent: 'complete_task'; taskId: string; entityName?: string }
+  | { intent: 'create_project'; projectId: string; entityName?: string }
+  | { intent: 'add_member'; projectId: string; userId: string; entityName?: string }
+  | { intent: 'create_event'; eventId: string; entityName?: string }
+  | { intent: 'save_note'; noteId: string; projectId: string | null; entityName?: string }
+  | { intent: 'update_task'; taskId: string; updatedFields: string[]; entityName?: string }
+  | { intent: 'update_event'; eventId: string; updatedFields: string[]; entityName?: string }
+  | { intent: 'update_project'; projectId: string; updatedFields: string[]; entityName?: string }
 
 // ─────────────────────────────────────────────
 // Multi-step command result (from AI)

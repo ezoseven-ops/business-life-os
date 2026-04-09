@@ -7,7 +7,7 @@ export default function VoicePage() {
     <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
       <Header title="Voice Notes" backHref="/" />
 
-      <div className="px-4 py-4 max-w-lg mx-auto">
+      <div className="px-4 py-4 max-w-lg mx-auto pb-24">
         <EmptyState
           title="Voice capture is built in"
           description="Use the microphone button on the home screen to record, transcribe, and process voice input."

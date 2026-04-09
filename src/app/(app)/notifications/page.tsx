@@ -14,7 +14,7 @@ export default async function NotificationsPage() {
     <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
       <Header title="Notifications" backHref="/" />
 
-      <div className="px-4 py-4 max-w-lg mx-auto">
+      <div className="px-4 py-4 max-w-lg mx-auto pb-24">
         {notifications.length === 0 ? (
           <EmptyState
             title="No notifications"

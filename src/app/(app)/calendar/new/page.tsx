@@ -76,7 +76,7 @@ export default function NewEventPage() {
         }
       />
 
-      <div className="px-5 py-5 max-w-lg mx-auto space-y-4">
+      <div className="px-5 py-5 max-w-lg mx-auto space-y-4 pb-24">
         <input
           type="text"
           placeholder="Event title"

@@ -163,7 +163,7 @@ export default async function ProjectDetailPage({
         }
       />
 
-      <div className="px-4 py-4 max-w-lg mx-auto space-y-5 pb-4">
+      <div className="px-4 py-4 max-w-lg mx-auto space-y-5 pb-24">
         {/* Project header card */}
         <div className="p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="flex items-start justify-between gap-3 mb-3">

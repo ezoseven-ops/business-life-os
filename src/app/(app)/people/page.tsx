@@ -45,7 +45,7 @@ export default async function PeoplePage({
         }
       />
 
-      <div className="px-4 py-4 max-w-lg mx-auto">
+      <div className="px-4 py-4 max-w-lg mx-auto pb-24">
         <PeoplePageClient showInitially={params.new === '1'} />
 
         {people.length === 0 ? (

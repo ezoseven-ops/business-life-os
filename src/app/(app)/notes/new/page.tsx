@@ -53,7 +53,7 @@ export default function QuickCapturePage() {
         }
       />
 
-      <div className="px-5 py-5 max-w-lg mx-auto space-y-2">
+      <div className="px-5 py-5 max-w-lg mx-auto space-y-2 pb-24">
         <input
           type="text"
           placeholder="Title"

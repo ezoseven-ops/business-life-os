@@ -89,7 +89,7 @@ export function NoteDetailClient({ note }: NoteDetailClientProps) {
   }
 
   return (
-    <div className="px-5 py-5 max-w-lg mx-auto">
+    <div className="px-5 py-5 max-w-lg mx-auto pb-24">
       {/* Meta row */}
       <div className="flex items-center gap-2 mb-4">
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>

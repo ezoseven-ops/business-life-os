@@ -117,7 +117,7 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
   }
 
   return (
-    <div className="px-5 py-5 max-w-lg mx-auto">
+    <div className="px-5 py-5 max-w-lg mx-auto pb-24">
       {editing ? (
         <div className="space-y-4">
           <input

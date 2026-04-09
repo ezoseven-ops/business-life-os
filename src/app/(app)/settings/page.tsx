@@ -50,7 +50,7 @@ export default async function SettingsPage({
     <div className="min-h-dvh" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
       <Header title="Settings" backHref="/" />
 
-      <div className="px-4 py-4 max-w-lg mx-auto space-y-6">
+      <div className="px-4 py-4 max-w-lg mx-auto space-y-6 pb-24">
         {/* Profile */}
         <section className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#6b6b85' }}>Profile</h3>

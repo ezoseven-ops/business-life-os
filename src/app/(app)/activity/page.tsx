@@ -44,6 +44,7 @@ export default async function ActivityPage() {
           </h1>
           <Link
             href="/"
+          prefetch={false}
             className="text-[12px] font-medium"
             style={{ color: 'var(--color-cc-accent, #7c6ef6)' }}
           >

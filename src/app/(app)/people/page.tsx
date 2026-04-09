@@ -39,7 +39,7 @@ export default async function PeoplePage({
       <Header
         title="People"
         action={
-          <Link href="/people?new=1" style={{ color: '#7c6ef6' }} className="font-medium text-sm">
+          <Link prefetch={false} href="/people?new=1" style={{ color: '#7c6ef6' }} className="font-medium text-sm">
             + Add
           </Link>
         }
@@ -70,6 +70,7 @@ export default async function PeoplePage({
                 <Link
                   key={person.id}
                   href={`/people/${person.id}`}
+                    prefetch={false}
                   className="block rounded-2xl p-4 transition-all active:scale-[0.98]"
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
                 >

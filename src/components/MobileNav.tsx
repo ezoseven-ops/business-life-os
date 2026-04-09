@@ -106,6 +106,7 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 onClick={() => setShowMenu(false)}
                 className="flex items-center gap-3.5 rounded-2xl px-5 py-3.5 min-w-[210px]"
                 style={{
@@ -145,6 +146,7 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 className={`flex flex-col items-center justify-center gap-1 w-16 py-1.5 ${
                   isActive ? 'nav-active' : 'nav-inactive'
                 }`}
@@ -181,6 +183,7 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
                 className={`flex flex-col items-center justify-center gap-1 w-16 py-1.5 ${
                   isActive ? 'nav-active' : 'nav-inactive'
                 }`}

@@ -52,7 +52,7 @@ export default async function CalendarPage() {
       <Header
         title="Calendar"
         action={
-          <Link href="/calendar/new" className="text-sm font-semibold text-primary">
+          <Link prefetch={false} href="/calendar/new" className="text-sm font-semibold text-primary">
             + New
           </Link>
         }
@@ -64,7 +64,7 @@ export default async function CalendarPage() {
             title="No upcoming events"
             description="Schedule events or connect Google Calendar in Settings."
             action={
-              <Link href="/calendar/new" className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold">
+              <Link prefetch={false} href="/calendar/new" className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold">
                 New event
               </Link>
             }
@@ -81,6 +81,7 @@ export default async function CalendarPage() {
                     <Link
                       key={event.id as string}
                       href={`/events/${event.id as string}?from=calendar`}
+                    prefetch={false}
                       className="card p-4 block"
                     >
                       <div className="flex items-start gap-3">

@@ -92,6 +92,7 @@ export default async function CommandCenter() {
               </p>
               <Link
                 href="/activity"
+              prefetch={false}
                 className="text-[12px] font-medium"
                 style={{ color: 'var(--color-cc-accent)' }}
               >

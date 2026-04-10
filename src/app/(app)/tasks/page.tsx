@@ -30,17 +30,17 @@ export default async function TasksPage({
   }
 
   const statusConfig = {
-    TODO: { label: 'To Do', color: 'text-gray-500' },
-    IN_PROGRESS: { label: 'In Progress', color: 'text-blue-600' },
-    WAITING: { label: 'Waiting', color: 'text-amber-600' },
-    DONE: { label: 'Completed', color: 'text-green-600' },
+    TODO: { label: 'To Do', color: 'var(--color-cc-text-muted)' },
+    IN_PROGRESS: { label: 'In Progress', color: 'var(--color-cc-info)' },
+    WAITING: { label: 'Waiting', color: 'var(--color-cc-risk)' },
+    DONE: { label: 'Completed', color: 'var(--color-cc-success)' },
   }
 
-  const priorityStyles: Record<string, string> = {
-    URGENT: 'bg-red-50 text-red-600',
-    HIGH: 'bg-orange-50 text-orange-600',
-    MEDIUM: 'bg-blue-50 text-blue-600',
-    LOW: 'bg-gray-100 text-gray-500',
+  const priorityStyles: Record<string, { bg: string; color: string }> = {
+    URGENT: { bg: 'var(--color-cc-fire-muted)', color: 'var(--color-cc-fire)' },
+    HIGH: { bg: 'var(--color-cc-risk-muted)', color: 'var(--color-cc-risk)' },
+    MEDIUM: { bg: 'var(--color-cc-surface)', color: 'var(--color-cc-info)' },
+    LOW: { bg: 'var(--color-cc-surface)', color: 'var(--color-cc-text-muted)' },
   }
 
   const defaultProjectId = projects[0]?.id
@@ -68,10 +68,10 @@ export default async function TasksPage({
               .map((status) => (
                 <section key={status}>
                   <div className="flex items-center gap-2 mb-2.5">
-                    <h3 className={`text-xs font-bold uppercase tracking-wider ${statusConfig[status].color}`}>
+                    <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: statusConfig[status].color }}>
                       {statusConfig[status].label}
                     </h3>
-                    <span className="text-[10px] font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: 'var(--color-cc-text-muted)', backgroundColor: 'var(--color-cc-surface)' }}>
                       {grouped[status].length}
                     </span>
                   </div>
@@ -81,27 +81,27 @@ export default async function TasksPage({
                         <TaskCheckbox taskId={task.id} status={task.status} />
                         <Link href={`/tasks/${task.id}`} className="flex-1 min-w-0">
                           <p className={`text-sm font-medium truncate ${
-                            task.status === 'DONE' ? 'line-through text-gray-400' : 'text-gray-900'
+                            task.status === 'DONE' ? 'line-through' : ''
                           }`}>
                             {task.title}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-gray-400">{task.project.name}</span>
+                            <span className="text-xs" style={{ color: 'var(--color-cc-text-muted)' }}>{task.project.name}</span>
                             {task.assignee && (
                               <>
-                                <span className="text-gray-300">&middot;</span>
-                                <span className="text-xs text-gray-400">{task.assignee.name}</span>
+                                <span style={{ color: 'var(--color-cc-text-dim)' }}>&middot;</span>
+                                <span className="text-xs" style={{ color: 'var(--color-cc-text-muted)' }}>{task.assignee.name}</span>
                               </>
                             )}
                             {task.dueDate && (
                               <>
-                                <span className="text-gray-300">&middot;</span>
-                                <span className="text-xs text-gray-400">{formatDate(task.dueDate)}</span>
+                                <span style={{ color: 'var(--color-cc-text-dim)' }}>&middot;</span>
+                                <span className="text-xs" style={{ color: 'var(--color-cc-text-muted)' }}>{formatDate(task.dueDate)}</span>
                               </>
                             )}
                           </div>
                         </Link>
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${priorityStyles[task.priority]}`}>
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: priorityStyles[task.priority].bg, color: priorityStyles[task.priority].color }}>
                           {task.priority}
                         </span>
                       </div>

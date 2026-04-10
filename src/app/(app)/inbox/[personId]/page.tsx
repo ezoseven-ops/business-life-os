@@ -22,7 +22,7 @@ export default async function ThreadPage({
   const projects = await getProjects(session.user.workspaceId)
 
   return (
-    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
+    <div className="min-h-dvh" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
       <Header
         title={person.name}
         backHref="/inbox"

@@ -13,7 +13,7 @@ export default async function InboxPage() {
   const hasAnything = people.length > 0 || orphanMessages.length > 0
 
   return (
-    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
+    <div className="min-h-dvh" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
       <Header title="Inbox" />
 
       <div className="px-4 py-4 max-w-lg mx-auto pb-24">

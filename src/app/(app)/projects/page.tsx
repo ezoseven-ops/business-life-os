@@ -19,7 +19,7 @@ export default async function ProjectsPage() {
   const projects = await getProjects(session.user.workspaceId)
 
   return (
-    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
+    <div className="min-h-dvh" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
       <Header title="Projects" />
 
       <div className="px-4 py-4 max-w-lg mx-auto pb-24">

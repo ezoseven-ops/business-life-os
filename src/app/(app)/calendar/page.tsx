@@ -48,7 +48,7 @@ export default async function CalendarPage() {
   const grouped = groupByDate(events)
 
   return (
-    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
+    <div className="min-h-dvh" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
       <Header
         title="Calendar"
         action={

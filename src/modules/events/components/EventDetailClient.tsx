@@ -125,7 +125,7 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
             value={title}
             onChange={(e) => { setTitle(e.target.value); setError('') }}
             placeholder="Event title"
-            className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-gray-300"
+            className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)]"
             autoFocus
             disabled={saving}
           />
@@ -135,30 +135,30 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
               type="checkbox"
               checked={allDay}
               onChange={(e) => setAllDay(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              className="w-4 h-4 rounded border-white/6 text-[var(--color-cc-accent)] focus:ring-[var(--color-cc-accent)]"
               disabled={saving}
             />
-            <span className="text-sm text-gray-600">All day</span>
+            <span className="text-sm text-[var(--color-cc-text-secondary)]">All day</span>
           </label>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">Start</label>
+              <label className="block text-xs font-medium text-[var(--color-cc-text-muted)] mb-1">Start</label>
               <input
                 type={allDay ? 'date' : 'datetime-local'}
                 value={allDay ? startAt.slice(0, 10) : startAt}
                 onChange={(e) => setStartAt(e.target.value)}
-                className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]"
                 disabled={saving}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">End</label>
+              <label className="block text-xs font-medium text-[var(--color-cc-text-muted)] mb-1">End</label>
               <input
                 type={allDay ? 'date' : 'datetime-local'}
                 value={allDay ? endAt.slice(0, 10) : endAt}
                 onChange={(e) => setEndAt(e.target.value)}
-                className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
+                className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]"
                 disabled={saving}
               />
             </div>
@@ -169,7 +169,7 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
             placeholder="Location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-primary placeholder:text-gray-400"
+            className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)] placeholder:text-[var(--color-cc-text-muted)]"
             disabled={saving}
           />
 
@@ -178,7 +178,7 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-primary resize-none placeholder:text-gray-400"
+            className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)] resize-none placeholder:text-[var(--color-cc-text-muted)]"
             disabled={saving}
           />
 
@@ -193,13 +193,13 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
               {deleting ? 'Deleting...' : confirmingDelete ? 'Confirm Delete?' : 'Delete'}
             </button>
             <div className="flex gap-2">
-              <button onClick={handleCancel} disabled={saving} className="text-xs font-medium text-gray-400 px-3 py-1.5">
+              <button onClick={handleCancel} disabled={saving} className="text-xs font-medium text-[var(--color-cc-text-muted)] px-3 py-1.5">
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={!title.trim() || saving}
-                className="text-xs font-semibold text-white bg-primary px-4 py-1.5 rounded-lg disabled:opacity-40"
+                className="text-xs font-semibold text-[var(--color-cc-bg)] bg-[var(--color-cc-accent)] px-4 py-1.5 rounded-lg disabled:opacity-40"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
@@ -208,41 +208,41 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
         </div>
       ) : (
         <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">{event.title}</h2>
+          <h2 className="text-xl font-bold text-[var(--color-cc-text)] mb-4">{event.title}</h2>
 
           <div className="space-y-3 mb-6">
             <div className="flex items-center gap-3">
-              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <svg className="w-4 h-4 text-[var(--color-cc-text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
-              <div className="text-sm text-gray-700">
+              <div className="text-sm text-[var(--color-cc-text-secondary)]">
                 <p>{mounted ? formatDateTime(event.startAt, event.allDay) : '\u00A0'}</p>
                 {event.endAt && (
-                  <p className="text-gray-400">{mounted ? `to ${formatDateTime(event.endAt, event.allDay)}` : '\u00A0'}</p>
+                  <p className="text-[var(--color-cc-text-muted)]">{mounted ? `to ${formatDateTime(event.endAt, event.allDay)}` : '\u00A0'}</p>
                 )}
               </div>
             </div>
 
             {event.location && (
               <div className="flex items-center gap-3">
-                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <svg className="w-4 h-4 text-[var(--color-cc-text-muted)] flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                 </svg>
-                <span className="text-sm text-gray-700">{event.location}</span>
+                <span className="text-sm text-[var(--color-cc-text-secondary)]">{event.location}</span>
               </div>
             )}
           </div>
 
           {event.description ? (
-            <p className="text-base leading-relaxed text-gray-700 whitespace-pre-wrap mb-6">
+            <p className="text-base leading-relaxed text-[var(--color-cc-text-secondary)] whitespace-pre-wrap mb-6">
               {event.description}
             </p>
           ) : (
-            <p className="text-base text-gray-400 italic mb-6">No description</p>
+            <p className="text-base text-[var(--color-cc-text-muted)] italic mb-6">No description</p>
           )}
 
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-4 border-t border-white/6">
             <button
               onClick={handleDelete}
               disabled={deleting}
@@ -252,7 +252,7 @@ export function EventDetailClient({ event }: EventDetailClientProps) {
             </button>
             <button
               onClick={() => setEditing(true)}
-              className="text-xs font-semibold text-primary px-3 py-1.5"
+              className="text-xs font-semibold text-[var(--color-cc-accent)] px-3 py-1.5"
             >
               Edit
             </button>

@@ -25,7 +25,7 @@ export default function RootError({
             alignItems: 'center',
             justifyContent: 'center',
             padding: '24px',
-            backgroundColor: '#f9fafb',
+            backgroundColor: 'var(--color-cc-bg)',
           }}
         >
           <div style={{ textAlign: 'center', maxWidth: 360 }}>
@@ -34,7 +34,7 @@ export default function RootError({
                 width: 56,
                 height: 56,
                 borderRadius: '50%',
-                backgroundColor: '#fffbeb',
+                backgroundColor: 'var(--color-cc-risk-muted)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -47,7 +47,7 @@ export default function RootError({
                 viewBox="0 0 24 24"
                 fill="none"
                 strokeWidth={1.5}
-                stroke="#d97706"
+                stroke="var(--color-cc-risk)"
               >
                 <path
                   strokeLinecap="round"
@@ -56,18 +56,18 @@ export default function RootError({
                 />
               </svg>
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 4 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-cc-text)', marginBottom: 4 }}>
               Something went wrong
             </h2>
-            <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 14, color: 'var(--color-cc-text-muted)', marginBottom: 24, lineHeight: 1.6 }}>
               An unexpected error occurred. Your data is safe.
             </p>
             <button
               onClick={reset}
               style={{
                 padding: '12px 24px',
-                backgroundColor: '#111827',
-                color: 'white',
+                backgroundColor: 'var(--color-cc-accent)',
+                color: 'var(--color-cc-bg)',
                 fontSize: 14,
                 fontWeight: 600,
                 borderRadius: 12,

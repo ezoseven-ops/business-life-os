@@ -52,26 +52,26 @@ export default async function SettingsPage({
 
       <div className="px-4 py-4 max-w-lg mx-auto space-y-6 pb-24">
         {/* Profile */}
-        <section className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#6b6b85' }}>Profile</h3>
+        <section className="rounded-xl p-4 space-y-3" style={{ background: 'var(--color-cc-surface-subtle)', border: '1px solid var(--color-cc-border)' }}>
+          <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--color-cc-text-muted)' }}>Profile</h3>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(124,110,246,0.12)' }}>
-              <span className="text-lg font-bold" style={{ color: '#7c6ef6' }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-light)' }}>
+              <span className="text-lg font-bold" style={{ color: 'var(--color-cc-accent)' }}>
                 {session.user.name?.charAt(0)?.toUpperCase() || '?'}
               </span>
             </div>
             <div>
-              <p className="font-medium" style={{ color: '#f0f0f5' }}>{session.user.name || 'No name'}</p>
+              <p className="font-medium" style={{ color: 'var(--color-cc-text)' }}>{session.user.name || 'No name'}</p>
               <p className="text-sm" style={{ color: '#a0a0b8' }}>{session.user.email}</p>
             </div>
           </div>
         </section>
 
         {/* Workspace */}
-        <section className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#6b6b85' }}>Workspace</h3>
+        <section className="rounded-xl p-4 space-y-3" style={{ background: 'var(--color-cc-surface-subtle)', border: '1px solid var(--color-cc-border)' }}>
+          <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--color-cc-text-muted)' }}>Workspace</h3>
           <div>
-            <p className="font-medium" style={{ color: '#f0f0f5' }}>{workspace?.name}</p>
+            <p className="font-medium" style={{ color: 'var(--color-cc-text)' }}>{workspace?.name}</p>
             <p className="text-sm" style={{ color: '#a0a0b8' }}>{workspace?._count.members} member(s)</p>
           </div>
         </section>
@@ -92,17 +92,17 @@ export default async function SettingsPage({
         />
 
         {/* Integrations */}
-        <section className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: '#6b6b85' }}>Integrations</h3>
+        <section className="rounded-xl p-4 space-y-3" style={{ background: 'var(--color-cc-surface-subtle)', border: '1px solid var(--color-cc-border)' }}>
+          <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--color-cc-text-muted)' }}>Integrations</h3>
           <div className="space-y-2">
             {['TELEGRAM', 'WHATSAPP'].map((type) => {
               const connected = integrations.some((i) => i.type === type)
               return (
                 <div key={type} className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium" style={{ color: '#f0f0f5' }}>{type.charAt(0) + type.slice(1).toLowerCase()}</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--color-cc-text)' }}>{type.charAt(0) + type.slice(1).toLowerCase()}</span>
                   <span className="text-xs font-medium px-2 py-1 rounded-full" style={{
-                    backgroundColor: connected ? 'rgba(45,216,130,0.12)' : 'rgba(255,255,255,0.05)',
-                    color: connected ? '#2dd882' : '#6b6b85'
+                    backgroundColor: connected ? 'var(--color-cc-success-muted)' : 'var(--color-cc-surface)',
+                    color: connected ? 'var(--color-cc-success)' : 'var(--color-cc-text-muted)'
                   }}>
                     {connected ? 'Connected' : 'Not connected'}
                   </span>
@@ -122,7 +122,7 @@ export default async function SettingsPage({
           <button
             type="submit"
             className="w-full py-3 text-center font-medium rounded-xl"
-            style={{ color: '#ff5a5a', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ color: 'var(--color-cc-fire)', background: 'var(--color-cc-surface-subtle)', border: '1px solid var(--color-cc-border)' }}
           >
             Sign out
           </button>

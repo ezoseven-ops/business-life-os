@@ -172,7 +172,7 @@ export function MobileNav() {
               transition: 'transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease',
             }}
           >
-            <svg className="w-[22px] h-[22px] text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+            <svg className="w-[22px] h-[22px] text-[var(--color-cc-bg)]" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </button>

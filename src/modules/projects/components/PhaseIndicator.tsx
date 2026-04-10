@@ -66,7 +66,7 @@ export function PhaseIndicator({
                 <div
                   className="flex-1 h-[2px] rounded-full"
                   style={{
-                    backgroundColor: isActive ? meta.color : '#e5e7eb',
+                    backgroundColor: isActive ? meta.color : 'var(--color-cc-surface-elevated)',
                   }}
                 />
               )}
@@ -75,7 +75,7 @@ export function PhaseIndicator({
                 style={{
                   width: isCurrent ? 24 : 8,
                   height: isCurrent ? 24 : 8,
-                  backgroundColor: isActive ? meta.color : '#e5e7eb',
+                  backgroundColor: isActive ? meta.color : 'var(--color-cc-surface-elevated)',
                 }}
               >
                 {isCurrent && (
@@ -88,7 +88,7 @@ export function PhaseIndicator({
                 <div
                   className="flex-1 h-[2px] rounded-full"
                   style={{
-                    backgroundColor: idx < currentIdx ? PHASE_META[PHASE_ORDER[idx + 1]].color : '#e5e7eb',
+                    backgroundColor: idx < currentIdx ? PHASE_META[PHASE_ORDER[idx + 1]].color : 'var(--color-cc-surface-elevated)',
                   }}
                 />
               )}
@@ -98,7 +98,7 @@ export function PhaseIndicator({
             <span
               className="text-[10px] font-semibold tracking-wide"
               style={{
-                color: isCurrent ? meta.color : isActive ? '#6b7280' : '#d1d5db',
+                color: isCurrent ? meta.color : isActive ? 'var(--color-cc-text-muted)' : 'var(--color-cc-text-dim)',
               }}
             >
               {meta.label}

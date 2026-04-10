@@ -98,7 +98,7 @@ export function MobileNav() {
           />
           <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2.5">
             {[
-              { href: '/calendar/new', label: 'New Event', color: '#7c6ef6', icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5' },
+              { href: '/calendar/new', label: 'New Event', color: '#8b5cf6', icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5' },
               { href: '/tasks?new=1', label: 'New Task', color: '#2dd882', icon: 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z' },
               { href: '/notes/new', label: 'Quick Note', color: '#ffb545', icon: 'm16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125' },
               { href: '/voice', label: 'Voice Note', color: '#ff5a5a', icon: 'M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z' },
@@ -113,7 +113,7 @@ export function MobileNav() {
                   background: 'rgba(22, 22, 33, 0.95)',
                   backdropFilter: 'blur(40px)',
                   WebkitBackdropFilter: 'blur(40px)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  border: '1px solid var(--color-cc-border-medium)',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
                 }}
               >
@@ -127,7 +127,7 @@ export function MobileNav() {
                 </div>
                 <span
                   className="font-semibold text-[14px]"
-                  style={{ color: '#f0f0f5' }}
+                  style={{ color: 'var(--color-cc-text)' }}
                 >
                   {item.label}
                 </span>
@@ -164,10 +164,10 @@ export function MobileNav() {
             style={{
               background: showMenu
                 ? '#2a2a3a'
-                : 'linear-gradient(135deg, #7c6ef6 0%, #6a5bf0 100%)',
+                : 'linear-gradient(135deg, var(--color-cc-accent) 0%, var(--color-primary-hover) 100%)',
               boxShadow: showMenu
                 ? 'none'
-                : '0 4px 20px rgba(124,110,246,0.4), 0 1px 3px rgba(124,110,246,0.3)',
+                : '0 4px 20px rgba(201,168,106,0.4), 0 1px 3px rgba(201,168,106,0.3)',
               transform: showMenu ? 'rotate(45deg)' : 'none',
               transition: 'transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease',
             }}

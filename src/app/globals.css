@@ -1,58 +1,79 @@
 @import "tailwindcss";
 
 @theme {
-  /* ─── Light theme (default for all pages) ─── */
-  --color-primary: #3b82f6;
-  --color-primary-hover: #2563eb;
-  --color-primary-light: #eff6ff;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f9fafb;
-  --color-border: #e5e7eb;
-  --color-border-light: #f3f4f6;
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
-  --color-danger: #ef4444;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-urgent: #ef4444;
+  /* ─── Premium Dark Theme — Graphite / Navy / Gold ─── */
+  --color-primary: #C9A86A;
+  --color-primary-hover: #D8BC84;
+  --color-primary-light: rgba(201, 168, 106, 0.12);
+  --color-surface: #151922;
+  --color-surface-alt: #1A1F29;
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-light: rgba(255, 255, 255, 0.04);
+  --color-text: #F3F1EA;
+  --color-text-secondary: #B8B3A7;
+  --color-text-muted: #8E8A83;
+  --color-danger: #ff5a5a;
+  --color-success: #2dd882;
+  --color-warning: #ffb545;
+  --color-urgent: #ff5a5a;
 
-  /* ─── Command Center dark theme tokens ─── */
-  --color-cc-bg: #08080d;
-  --color-cc-surface: #111118;
-  --color-cc-surface-hover: #16161f;
-  --color-cc-surface-elevated: #1a1a24;
+  /* ─── OS Surface — deep material system ─── */
+  --color-cc-bg: #0F1115;
+  --color-cc-surface: rgba(255, 255, 255, 0.05);
+  --color-cc-surface-hover: rgba(255, 255, 255, 0.08);
+  --color-cc-surface-elevated: rgba(255, 255, 255, 0.07);
   --color-cc-border: rgba(255, 255, 255, 0.06);
   --color-cc-border-subtle: rgba(255, 255, 255, 0.03);
-  --color-cc-text: #f0f0f3;
-  --color-cc-text-secondary: #8b8b9e;
-  --color-cc-text-muted: #55556a;
-  --color-cc-text-dim: #3a3a4a;
-  --color-cc-accent: #6366f1;
-  --color-cc-fire: #ef4444;
-  --color-cc-fire-muted: rgba(239, 68, 68, 0.12);
-  --color-cc-risk: #f59e0b;
-  --color-cc-risk-muted: rgba(245, 158, 11, 0.12);
-  --color-cc-waste: #6b7280;
-  --color-cc-waste-muted: rgba(107, 114, 128, 0.12);
-  --color-cc-success: #10b981;
+  --color-cc-text: #F3F1EA;
+  --color-cc-text-secondary: #B8B3A7;
+  --color-cc-text-muted: #8E8A83;
+  --color-cc-text-dim: #5C5852;
+  --color-cc-accent: #C9A86A;
+  --color-cc-accent-glow: rgba(201, 168, 106, 0.15);
+  --color-cc-fire: #ff5a5a;
+  --color-cc-fire-muted: rgba(255, 90, 90, 0.1);
+  --color-cc-risk: #ffb545;
+  --color-cc-risk-muted: rgba(255, 181, 69, 0.1);
+  --color-cc-waste: #8E8A83;
+  --color-cc-waste-muted: rgba(142, 138, 131, 0.1);
+  --color-cc-success: #2dd882;
+  --color-cc-success-muted: rgba(45, 216, 130, 0.1);
+
+  /* ─── Extended Semantic Palette ─── */
+  --color-cc-info: #3b82f6;
+  --color-cc-orange: #f97316;
+  --color-cc-cyan: #06b6d4;
+  --color-cc-violet: #8b5cf6;
+  --color-cc-green: #22c55e;
+  --color-cc-amber: #f59e0b;
+  --color-cc-purple: #a855f7;
+  --color-cc-high: #ff8a45;
+
+  /* ─── Additional Surfaces ─── */
+  --color-cc-surface-subtle: rgba(255, 255, 255, 0.03);
+  --color-cc-surface-faint: rgba(255, 255, 255, 0.04);
+  --color-cc-border-medium: rgba(255, 255, 255, 0.08);
+  --color-cc-separator: rgba(255, 255, 255, 0.1);
+  --color-cc-surface-input: #1A1F29;
 
   /* ─── Typography ─── */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-  --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", ui-monospace, monospace;
 }
 
 html {
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
-  background-color: #f9fafb;
+  background-color: var(--color-cc-bg);
 }
 
 body {
   font-family: var(--font-sans);
   overscroll-behavior: none;
-  background-color: #f9fafb;
-  color: #111827;
+  background-color: var(--color-cc-bg);
+  color: var(--color-cc-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @supports (padding-top: env(safe-area-inset-top)) {
@@ -60,62 +81,148 @@ body {
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 }
 
-/* Better scrolling */
 .scroll-container {
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
 }
 
-/* ─── Light theme cards (Tasks, Projects, etc.) ─── */
+/* ─── Cards — frosted glass on dark ─── */
 .card {
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  background: var(--color-cc-surface-faint);
+  border-radius: 20px;
+  border: 1px solid var(--color-cc-border);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 var(--color-cc-surface-faint);
 }
 
 .card-hover {
-  transition: box-shadow 0.15s, transform 0.15s;
+  transition: box-shadow 0.2s ease, transform 0.15s ease, background 0.2s ease;
 }
 .card-hover:active {
   transform: scale(0.98);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.card-hover:hover {
+  background: var(--color-cc-border);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 12px 40px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 var(--color-cc-border);
 }
 
-/* ─── Command Center dark cards ─── */
+/* ─── OS Glass cards — deep glass ─── */
 .cc-card {
-  background: var(--color-cc-surface);
-  border-radius: 14px;
+  background: var(--color-cc-surface-faint);
+  border-radius: 20px;
   border: 1px solid var(--color-cc-border);
+  backdrop-filter: blur(40px) saturate(1.2);
+  -webkit-backdrop-filter: blur(40px) saturate(1.2);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 var(--color-cc-surface-faint);
 }
 
 .cc-card-elevated {
-  background: var(--color-cc-surface-elevated);
-  border-radius: 14px;
-  border: 1px solid var(--color-cc-border);
+  background: var(--color-cc-border);
+  border-radius: 20px;
+  border: 1px solid var(--color-cc-border-medium);
+  backdrop-filter: blur(40px) saturate(1.3);
+  -webkit-backdrop-filter: blur(40px) saturate(1.3);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 12px 48px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 var(--color-cc-border);
 }
 
 .cc-card:hover,
 .cc-card-hover:hover {
-  background: var(--color-cc-surface-hover);
+  background: var(--color-cc-surface-elevated);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 12px 48px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 var(--color-cc-border);
 }
 
-/* ─── Command Center zone separators ─── */
+/* ─── OS Zone spacing ─── */
 .cc-zone {
   padding-top: 20px;
-  padding-bottom: 4px;
+  padding-bottom: 0;
 }
 
 .cc-zone + .cc-zone {
-  border-top: 1px solid var(--color-cc-border-subtle);
+  border: none;
+}
+
+/* ─── Input — premium glass command palette ─── */
+.os-input {
+  background: var(--color-cc-surface);
+  border: 1px solid var(--color-cc-border-medium);
+  border-radius: 16px;
+  backdrop-filter: blur(40px) saturate(1.3);
+  -webkit-backdrop-filter: blur(40px) saturate(1.3);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 var(--color-cc-surface-faint);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.os-input:focus-within {
+  border-color: rgba(201, 168, 106, 0.5);
+  box-shadow:
+    0 0 0 4px rgba(201, 168, 106, 0.1),
+    0 4px 16px rgba(201, 168, 106, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 var(--color-cc-border);
+}
+
+/* ─── Glow accent ─── */
+.glow-accent {
+  box-shadow: 0 0 32px rgba(201, 168, 106, 0.2);
+}
+
+/* ─── Premium header — dark glass ─── */
+.os-header {
+  background: rgba(15, 17, 21, 0.8);
+  backdrop-filter: blur(40px) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) saturate(1.4);
+  border-bottom: 1px solid var(--color-cc-border);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Premium bottom nav — dark frosted glass ─── */
+.os-nav {
+  background: rgba(15, 17, 21, 0.85);
+  backdrop-filter: blur(40px) saturate(1.5);
+  -webkit-backdrop-filter: blur(40px) saturate(1.5);
+  border-top: 1px solid var(--color-cc-border);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Nav states ─── */
+.nav-active {
+  color: var(--color-cc-text);
+}
+.nav-inactive {
+  color: var(--color-cc-text-dim);
+}
+.nav-inactive:hover {
+  color: var(--color-cc-text-muted);
+}
+
+/* ─── Gradient accent line ─── */
+.gradient-line {
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-cc-accent), #D8BC84, var(--color-cc-accent));
+  border-radius: 1px;
 }
 
 /* Smooth transitions */
-* {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-  transition-duration: 0ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
 button, a, [role="button"] {
-  transition-duration: 150ms;
+  transition: background-color 180ms cubic-bezier(0.25, 0.1, 0.25, 1),
+              border-color 180ms cubic-bezier(0.25, 0.1, 0.25, 1),
+              opacity 180ms cubic-bezier(0.25, 0.1, 0.25, 1),
+              transform 120ms cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 200ms cubic-bezier(0.25, 0.1, 0.25, 1);
 }

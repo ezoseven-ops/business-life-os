@@ -9,7 +9,7 @@ function SkeletonBase({ className = '', style }: { className?: string; style?: R
   return (
     <div
       className={`animate-pulse rounded-xl ${className}`}
-      style={{ backgroundColor: '#e5e7eb', ...style }}
+      style={{ backgroundColor: 'var(--color-cc-surface-elevated)', ...style }}
     />
   )
 }
@@ -50,7 +50,7 @@ export function SkeletonList({ count = 3, height = 64 }: { count?: number; heigh
 
 export function SkeletonHeader() {
   return (
-    <div className="px-4 py-3 flex items-center gap-3 border-b border-gray-100" style={{ height: 56 }}>
+    <div className="px-4 py-3 flex items-center gap-3 " style={{ height: 56, borderBottom: '1px solid var(--color-cc-border)' }}>
       <SkeletonBase style={{ width: 24, height: 24, borderRadius: 6 }} />
       <SkeletonLine width={140} height={16} />
     </div>

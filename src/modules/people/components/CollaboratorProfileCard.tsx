@@ -113,7 +113,7 @@ export function CollaboratorProfileCard({
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-cc-text-muted)]">
           Collaborator Profile
         </h3>
         <div className="flex items-center gap-2">
@@ -121,14 +121,14 @@ export function CollaboratorProfileCard({
             <>
               <button
                 onClick={() => setShowParseInput(true)}
-                className="text-xs font-medium text-primary/70 hover:text-primary transition-colors"
+                className="text-xs font-medium text-[var(--color-cc-accent)]/70 hover:text-[var(--color-cc-accent)] transition-colors"
                 style={{ minHeight: '44px', padding: '10px 12px' }}
               >
                 AI Parse
               </button>
               <button
                 onClick={handleStartEdit}
-                className="text-xs font-medium text-primary/70 hover:text-primary transition-colors"
+                className="text-xs font-medium text-[var(--color-cc-accent)]/70 hover:text-[var(--color-cc-accent)] transition-colors"
                 style={{ minHeight: '44px', padding: '10px 12px' }}
               >
                 {hasProfile ? 'Edit' : 'Add Profile'}
@@ -148,20 +148,20 @@ export function CollaboratorProfileCard({
             onChange={(e) => setParseText(e.target.value)}
             placeholder={`Describe ${personName}'s profile, e.g. "backend developer, great with APIs and TypeScript, very reliable, available full-time"`}
             rows={3}
-            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-primary/50 resize-none"
+            className="w-full text-sm border border-white/6 rounded-xl px-3 py-2.5 outline-none focus:border-[var(--color-cc-accent)]/50 resize-none"
           />
           <div className="flex items-center gap-2">
             <button
               onClick={handleParseFromText}
               disabled={parsing || !parseText.trim()}
-              className="flex-1 text-sm font-semibold rounded-xl bg-primary text-white disabled:opacity-40 transition-all"
+              className="flex-1 text-sm font-semibold rounded-xl bg-[var(--color-cc-accent)] text-[var(--color-cc-bg)] disabled:opacity-40 transition-all"
               style={{ height: '44px' }}
             >
               {parsing ? 'Analyzing...' : 'Parse with AI'}
             </button>
             <button
               onClick={() => { setShowParseInput(false); setParseText(''); setError(null) }}
-              className="text-sm text-gray-500 rounded-xl transition-all"
+              className="text-sm text-[var(--color-cc-text-muted)] rounded-xl transition-all"
               style={{ height: '44px', padding: '0 12px' }}
             >
               Cancel
@@ -174,42 +174,42 @@ export function CollaboratorProfileCard({
       {editing && (
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Role</label>
+            <label className="text-xs text-[var(--color-cc-text-muted)] mb-1 block">Role</label>
             <input
               type="text"
               value={editRole}
               onChange={(e) => setEditRole(e.target.value)}
               placeholder="e.g. Backend Developer"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-primary/50"
+              className="w-full text-sm border border-white/6 rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]/50"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Skills (comma-separated)</label>
+            <label className="text-xs text-[var(--color-cc-text-muted)] mb-1 block">Skills (comma-separated)</label>
             <input
               type="text"
               value={editSkills}
               onChange={(e) => setEditSkills(e.target.value)}
               placeholder="TypeScript, React, API design"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-primary/50"
+              className="w-full text-sm border border-white/6 rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]/50"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Strengths (comma-separated)</label>
+            <label className="text-xs text-[var(--color-cc-text-muted)] mb-1 block">Strengths (comma-separated)</label>
             <input
               type="text"
               value={editStrengths}
               onChange={(e) => setEditStrengths(e.target.value)}
               placeholder="Reliable, fast learner"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-primary/50"
+              className="w-full text-sm border border-white/6 rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]/50"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Availability</label>
+              <label className="text-xs text-[var(--color-cc-text-muted)] mb-1 block">Availability</label>
               <select
                 value={editAvailability}
                 onChange={(e) => setEditAvailability(e.target.value as typeof editAvailability)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-primary/50 bg-white"
+                className="w-full text-sm border border-white/6 rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]/50 bg-transparent"
               >
                 {Object.entries(AVAILABILITY_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
@@ -217,11 +217,11 @@ export function CollaboratorProfileCard({
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Preferred Channel</label>
+              <label className="text-xs text-[var(--color-cc-text-muted)] mb-1 block">Preferred Channel</label>
               <select
                 value={editChannel}
                 onChange={(e) => setEditChannel(e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-primary/50 bg-white"
+                className="w-full text-sm border border-white/6 rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]/50 bg-transparent"
               >
                 <option value="">Not set</option>
                 {Object.entries(CHANNEL_LABELS).map(([value, label]) => (
@@ -231,7 +231,7 @@ export function CollaboratorProfileCard({
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">
+            <label className="text-xs text-[var(--color-cc-text-muted)] mb-1 block">
               Reliability Score: {editReliability}
             </label>
             <input
@@ -244,27 +244,27 @@ export function CollaboratorProfileCard({
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Timezone</label>
+            <label className="text-xs text-[var(--color-cc-text-muted)] mb-1 block">Timezone</label>
             <input
               type="text"
               value={editTimezone}
               onChange={(e) => setEditTimezone(e.target.value)}
               placeholder="Europe/Warsaw"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-primary/50"
+              className="w-full text-sm border border-white/6 rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]/50"
             />
           </div>
           <div className="flex items-center gap-2 pt-1">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 text-sm font-semibold rounded-xl bg-primary text-white disabled:opacity-40 transition-all"
+              className="flex-1 text-sm font-semibold rounded-xl bg-[var(--color-cc-accent)] text-[var(--color-cc-bg)] disabled:opacity-40 transition-all"
               style={{ height: '44px' }}
             >
               {saving ? 'Saving...' : 'Save Profile'}
             </button>
             <button
               onClick={() => { setEditing(false); setError(null) }}
-              className="text-sm text-gray-500 rounded-xl transition-all"
+              className="text-sm text-[var(--color-cc-text-muted)] rounded-xl transition-all"
               style={{ height: '44px', padding: '0 12px' }}
             >
               Cancel
@@ -280,13 +280,13 @@ export function CollaboratorProfileCard({
             <div className="space-y-2.5">
               {profile.role && (
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="text-gray-400 w-24">Role</span>
-                  <span className="text-gray-900 font-medium">{profile.role}</span>
+                  <span className="text-[var(--color-cc-text-muted)] w-24">Role</span>
+                  <span className="text-[var(--color-cc-text)] font-medium">{profile.role}</span>
                 </div>
               )}
               {profile.skills.length > 0 && (
                 <div className="flex items-start gap-3 text-sm">
-                  <span className="text-gray-400 w-24 pt-0.5">Skills</span>
+                  <span className="text-[var(--color-cc-text-muted)] w-24 pt-0.5">Skills</span>
                   <div className="flex flex-wrap gap-1.5">
                     {profile.skills.map((skill, i) => (
                       <span key={i} className="text-xs font-medium px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
@@ -298,7 +298,7 @@ export function CollaboratorProfileCard({
               )}
               {profile.strengths.length > 0 && (
                 <div className="flex items-start gap-3 text-sm">
-                  <span className="text-gray-400 w-24 pt-0.5">Strengths</span>
+                  <span className="text-[var(--color-cc-text-muted)] w-24 pt-0.5">Strengths</span>
                   <div className="flex flex-wrap gap-1.5">
                     {profile.strengths.map((s, i) => (
                       <span key={i} className="text-xs font-medium px-2 py-0.5 rounded-md bg-green-50 text-green-700">
@@ -309,41 +309,41 @@ export function CollaboratorProfileCard({
                 </div>
               )}
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-gray-400 w-24">Availability</span>
-                <span className="text-gray-900">{AVAILABILITY_LABELS[profile.availability] ?? 'Unknown'}</span>
+                <span className="text-[var(--color-cc-text-muted)] w-24">Availability</span>
+                <span className="text-[var(--color-cc-text)]">{AVAILABILITY_LABELS[profile.availability] ?? 'Unknown'}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-gray-400 w-24">Reliability</span>
+                <span className="text-[var(--color-cc-text-muted)] w-24">Reliability</span>
                 <div className="flex items-center gap-2">
-                  <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="w-20 h-1.5 bg-transparent/5 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
                         width: `${profile.reliabilityScore}%`,
-                        backgroundColor: profile.reliabilityScore > 70 ? '#22c55e'
-                          : profile.reliabilityScore > 40 ? '#f59e0b'
-                          : '#ef4444',
+                        backgroundColor: profile.reliabilityScore > 70 ? 'var(--color-cc-success)'
+                          : profile.reliabilityScore > 40 ? 'var(--color-cc-risk)'
+                          : 'var(--color-cc-fire)',
                       }}
                     />
                   </div>
-                  <span className="text-gray-600 text-xs">{profile.reliabilityScore}%</span>
+                  <span className="text-[var(--color-cc-text-secondary)] text-xs">{profile.reliabilityScore}%</span>
                 </div>
               </div>
               {profile.timezone && (
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="text-gray-400 w-24">Timezone</span>
-                  <span className="text-gray-900">{profile.timezone}</span>
+                  <span className="text-[var(--color-cc-text-muted)] w-24">Timezone</span>
+                  <span className="text-[var(--color-cc-text)]">{profile.timezone}</span>
                 </div>
               )}
               {profile.preferredChannel && (
                 <div className="flex items-center gap-3 text-sm">
-                  <span className="text-gray-400 w-24">Channel</span>
-                  <span className="text-gray-900">{CHANNEL_LABELS[profile.preferredChannel] ?? profile.preferredChannel}</span>
+                  <span className="text-[var(--color-cc-text-muted)] w-24">Channel</span>
+                  <span className="text-[var(--color-cc-text)]">{CHANNEL_LABELS[profile.preferredChannel] ?? profile.preferredChannel}</span>
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[var(--color-cc-text-muted)]">
               No collaborator profile yet. Use AI Parse or add manually.
             </p>
           )}

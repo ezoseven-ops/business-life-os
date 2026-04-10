@@ -39,7 +39,7 @@ export default async function PeoplePage({
       <Header
         title="People"
         action={
-          <Link prefetch={false} href="/people?new=1" style={{ color: '#7c6ef6' }} className="font-medium text-sm">
+          <Link prefetch={false} href="/people?new=1" style={{ color: 'var(--color-cc-accent)' }} className="font-medium text-sm">
             + Add
           </Link>
         }
@@ -60,8 +60,8 @@ export default async function PeoplePage({
               const lastMessage = person.messages?.[0]
               const avatarColor = avatarColors[idx % avatarColors.length]
               const channels: { label: string; color: string }[] = []
-              if (person.telegramId) channels.push({ label: 'TG', color: '#3b82f6' })
-              if (person.whatsappId) channels.push({ label: 'WA', color: '#2dd882' })
+              if (person.telegramId) channels.push({ label: 'TG', color: 'var(--color-cc-info)' })
+              if (person.whatsappId) channels.push({ label: 'WA', color: 'var(--color-cc-success)' })
 
               // Get projects from user's project memberships
               const projects = person.user?.projectMembers?.map((m: any) => m.project) ?? []
@@ -70,9 +70,9 @@ export default async function PeoplePage({
                 <Link
                   key={person.id}
                   href={`/people/${person.id}`}
-                    prefetch={false}
+                  prefetch={false}
                   className="block rounded-2xl p-4 transition-all active:scale-[0.98]"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                  style={{ background: 'var(--color-cc-surface-subtle)', border: '1px solid var(--color-cc-border)' }}
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: avatarColor + '1a' }}>
@@ -81,9 +81,9 @@ export default async function PeoplePage({
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-semibold truncate" style={{ color: '#f0f0f5' }}>{person.name}</p>
+                      <p className="text-[15px] font-semibold truncate" style={{ color: 'var(--color-cc-text)' }}>{person.name}</p>
                       {(person.company || profile?.role) && (
-                        <p className="text-xs truncate mt-0.5" style={{ color: '#a0a0b8' }}>
+                        <p className="text-xs truncate mt-0.5" style={{ color: 'var(--color-cc-text-secondary)' }}>
                           {profile?.role && <span>{profile.role}</span>}
                           {profile?.role && person.company && <span> · </span>}
                           {person.company && <span>{person.company}</span>}
@@ -91,7 +91,7 @@ export default async function PeoplePage({
                       )}
                     </div>
                     {lastMessage && (
-                      <span className="text-[11px] flex-shrink-0 mt-0.5" style={{ color: '#6b6b85' }}>
+                      <span className="text-[11px] flex-shrink-0 mt-0.5" style={{ color: 'var(--color-cc-text-muted)' }}>
                         {timeAgo(new Date(lastMessage.createdAt))}
                       </span>
                     )}
@@ -100,12 +100,12 @@ export default async function PeoplePage({
                   {profile?.skills && profile.skills.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       {profile.skills.slice(0, 4).map((skill: string) => (
-                        <span key={skill} className="px-2 py-0.5 text-[11px] font-medium rounded-full" style={{ backgroundColor: 'rgba(124,110,246,0.1)', color: '#a0a0b8' }}>
+                        <span key={skill} className="px-2 py-0.5 text-[11px] font-medium rounded-full" style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-cc-text-secondary)' }}>
                           {skill}
                         </span>
                       ))}
                       {profile.skills.length > 4 && (
-                        <span className="px-2 py-0.5 text-[11px] font-medium rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#6b6b85' }}>
+                        <span className="px-2 py-0.5 text-[11px] font-medium rounded-full" style={{ backgroundColor: 'var(--color-cc-surface)', color: 'var(--color-cc-text-muted)' }}>
                           +{profile.skills.length - 4}
                         </span>
                       )}
@@ -119,23 +119,23 @@ export default async function PeoplePage({
                         <span
                           key={proj.id}
                           className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#a0a0b8' }}
+                          style={{ backgroundColor: 'var(--color-cc-surface)', color: 'var(--color-cc-text-secondary)' }}
                         >
                           <span className="w-1.5 h-1.5 rounded-full" style={{
-                            backgroundColor: proj.status === 'ACTIVE' ? '#2dd882' : proj.status === 'PAUSED' ? '#ffb545' : '#6b6b85'
+                            backgroundColor: proj.status === 'ACTIVE' ? 'var(--color-cc-success)' : proj.status === 'PAUSED' ? 'var(--color-cc-risk)' : 'var(--color-cc-text-muted)'
                           }} />
                           {proj.name}
                         </span>
                       ))}
                       {projects.length > 3 && (
-                        <span className="px-2 py-0.5 text-[10px] font-medium rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#6b6b85' }}>
+                        <span className="px-2 py-0.5 text-[10px] font-medium rounded-full" style={{ backgroundColor: 'var(--color-cc-surface)', color: 'var(--color-cc-text-muted)' }}>
                           +{projects.length - 3}
                         </span>
                       )}
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: '1px solid var(--color-cc-surface-faint)' }}>
                     <div className="flex items-center gap-2">
                       {channels.map((ch) => (
                         <span key={ch.label} className="px-2 py-0.5 text-[10px] font-medium rounded-full" style={{ backgroundColor: ch.color + '1a', color: ch.color }}>
@@ -143,15 +143,15 @@ export default async function PeoplePage({
                         </span>
                       ))}
                       {channels.length === 0 && (
-                        <span className="text-[11px]" style={{ color: '#6b6b85' }}>No channels</span>
+                        <span className="text-[11px]" style={{ color: 'var(--color-cc-text-muted)' }}>No channels</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-[11px]" style={{ color: '#6b6b85' }}>
+                    <div className="flex items-center gap-3 text-[11px]" style={{ color: 'var(--color-cc-text-muted)' }}>
                       {person._count.messages > 0 && (
                         <span>{person._count.messages} msg{person._count.messages !== 1 ? 's' : ''}</span>
                       )}
                       {profile?.availability && (
-                        <span className="font-medium" style={{ color: profile.availability === 'HIGH' || profile.availability === 'FULL_TIME' ? '#2dd882' : profile.availability === 'MEDIUM' || profile.availability === 'PART_TIME' ? '#ffb545' : '#6b6b85' }}>
+                        <span className="font-medium" style={{ color: profile.availability === 'HIGH' || profile.availability === 'FULL_TIME' ? 'var(--color-cc-success)' : profile.availability === 'MEDIUM' || profile.availability === 'PART_TIME' ? 'var(--color-cc-risk)' : 'var(--color-cc-text-muted)' }}>
                           {profile.availability.toLowerCase().replace('_', ' ')}
                         </span>
                       )}

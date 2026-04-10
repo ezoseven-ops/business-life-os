@@ -18,7 +18,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#f9fafb',
+  themeColor: '#0F1115',
 }
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased" style={{ backgroundColor: '#f9fafb' }}>
+      <body className="antialiased" style={{ backgroundColor: '#0F1115' }}>
         {children}
         <script
           dangerouslySetInnerHTML={{

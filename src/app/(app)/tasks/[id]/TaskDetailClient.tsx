@@ -22,14 +22,14 @@ interface Props {
 }
 
 const statusOptions = [
-  { value: 'TODO', label: 'To Do', color: 'bg-gray-100 text-gray-600' },
+  { value: 'TODO', label: 'To Do', color: 'bg-white/10 text-[var(--color-cc-text-secondary)]' },
   { value: 'IN_PROGRESS', label: 'In Progress', color: 'bg-blue-50 text-blue-600' },
   { value: 'WAITING', label: 'Waiting', color: 'bg-amber-50 text-amber-600' },
   { value: 'DONE', label: 'Done', color: 'bg-green-50 text-green-600' },
 ]
 
 const priorityOptions = [
-  { value: 'LOW', label: 'Low', color: 'bg-gray-100 text-gray-500' },
+  { value: 'LOW', label: 'Low', color: 'bg-white/10 text-[var(--color-cc-text-muted)]' },
   { value: 'MEDIUM', label: 'Medium', color: 'bg-blue-50 text-blue-600' },
   { value: 'HIGH', label: 'High', color: 'bg-orange-50 text-orange-600' },
   { value: 'URGENT', label: 'Urgent', color: 'bg-red-50 text-red-600' },
@@ -121,11 +121,11 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
     <div className="space-y-4">
       {/* Title */}
       <div className="card p-5">
-        <h2 className="text-lg font-bold text-gray-900 mb-1">{task.title}</h2>
+        <h2 className="text-lg font-bold text-[var(--color-cc-text)] mb-1">{task.title}</h2>
         {task.description && (
-          <p className="text-sm text-gray-500">{task.description}</p>
+          <p className="text-sm text-[var(--color-cc-text-muted)]">{task.description}</p>
         )}
-        <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
+        <div className="flex items-center gap-2 mt-3 text-xs text-[var(--color-cc-text-muted)]">
           <span>Created by {task.creator?.name || 'Unknown'}</span>
           <span>&middot;</span>
           <span>{formatRelativeTime(task.createdAt)}</span>
@@ -140,8 +140,8 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
             <span className="text-xs font-semibold text-blue-600">Created from conversation</span>
           </div>
           {task.sourcePersonName && (
-            <p className="text-xs text-gray-500">
-              From conversation with <span className="font-medium text-gray-700">{task.sourcePersonName}</span>
+            <p className="text-xs text-[var(--color-cc-text-muted)]">
+              From conversation with <span className="font-medium text-[var(--color-cc-text-secondary)]">{task.sourcePersonName}</span>
             </p>
           )}
         </div>
@@ -151,7 +151,7 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
 
       {/* Status */}
       <div className="card p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">Status</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-cc-text-muted)] mb-2 block">Status</label>
         <div className="flex flex-wrap gap-2">
           {statusOptions.map(s => (
             <button
@@ -161,7 +161,7 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
                 task.status === s.value
                   ? s.color + ' ring-2 ring-offset-1 ring-current'
-                  : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                  : 'bg-white/5 text-[var(--color-cc-text-muted)] hover:bg-white/10'
               }`}
             >
               {s.label}
@@ -172,7 +172,7 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
 
       {/* Priority */}
       <div className="card p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">Priority</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-cc-text-muted)] mb-2 block">Priority</label>
         <div className="flex flex-wrap gap-2">
           {priorityOptions.map(p => (
             <button
@@ -182,7 +182,7 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
                 task.priority === p.value
                   ? p.color + ' ring-2 ring-offset-1 ring-current'
-                  : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                  : 'bg-white/5 text-[var(--color-cc-text-muted)] hover:bg-white/10'
               }`}
             >
               {p.label}
@@ -193,10 +193,10 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
 
       {/* Assignee */}
       <div className="card p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-cc-text-muted)] mb-2 block">
           Assignee
           {isPersonAssignee && (
-            <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: '#fef3c7', color: '#92400e' }}>
+            <span className="ml-2 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: 'var(--color-cc-risk-muted)', color: 'var(--color-cc-risk)' }}>
               External
             </span>
           )}
@@ -205,7 +205,7 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
           value={getAssigneeValue()}
           onChange={(e) => handleAssigneeChange(e.target.value)}
           disabled={saving}
-          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700"
+          className="w-full bg-white/5 border border-white/6 rounded-lg px-3 py-2 text-sm text-[var(--color-cc-text-secondary)]"
         >
           <option value="">Unassigned</option>
           {workspaceUsers.length > 0 && (
@@ -226,25 +226,25 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
           )}
         </select>
         {isPersonAssignee && assigneeDetail && (
-          <p className="text-xs text-gray-400 mt-1">{assigneeDetail}</p>
+          <p className="text-xs text-[var(--color-cc-text-muted)] mt-1">{assigneeDetail}</p>
         )}
       </div>
 
       {/* Due Date */}
       <div className="card p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">Due Date</label>
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-cc-text-muted)] mb-2 block">Due Date</label>
         <input
           type="date"
           value={task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''}
           onChange={(e) => updateField('dueDate', e.target.value || null)}
           disabled={saving}
-          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700"
+          className="w-full bg-white/5 border border-white/6 rounded-lg px-3 py-2 text-sm text-[var(--color-cc-text-secondary)]"
         />
       </div>
 
       {/* Scheduled Date (Calendar Readiness) */}
       <div className="card p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-cc-text-muted)] mb-2 block">
           Scheduled Date <span className="normal-case font-normal">(do on)</span>
         </label>
         <input
@@ -252,25 +252,25 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
           value={task.scheduledDate ? new Date(task.scheduledDate).toISOString().split('T')[0] : ''}
           onChange={(e) => updateField('scheduledDate', e.target.value || null)}
           disabled={saving}
-          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700"
+          className="w-full bg-white/5 border border-white/6 rounded-lg px-3 py-2 text-sm text-[var(--color-cc-text-secondary)]"
         />
-        <p className="text-xs text-gray-400 mt-1">When you plan to work on this task (for calendar sync)</p>
+        <p className="text-xs text-[var(--color-cc-text-muted)] mt-1">When you plan to work on this task (for calendar sync)</p>
       </div>
 
       {/* Comments */}
       <div className="card p-4">
-        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 block">
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-cc-text-muted)] mb-3 block">
           Comments ({task.comments?.length || 0})
         </label>
         {task.comments?.length > 0 && (
           <div className="space-y-3 mb-4">
             {task.comments.map((c: any) => (
-              <div key={c.id} className="bg-gray-50 rounded-xl px-3 py-2.5">
+              <div key={c.id} className="bg-white/5 rounded-xl px-3 py-2.5">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-gray-700">{c.author?.name || 'Unknown'}</span>
-                  <span className="text-[10px] text-gray-400">{formatRelativeTime(c.createdAt)}</span>
+                  <span className="text-xs font-semibold text-[var(--color-cc-text-secondary)]">{c.author?.name || 'Unknown'}</span>
+                  <span className="text-[10px] text-[var(--color-cc-text-muted)]">{formatRelativeTime(c.createdAt)}</span>
                 </div>
-                <p className="text-sm text-gray-600">{c.content}</p>
+                <p className="text-sm text-[var(--color-cc-text-secondary)]">{c.content}</p>
               </div>
             ))}
           </div>
@@ -281,12 +281,12 @@ export function TaskDetailClient({ task, workspaceUsers, projectPersons, current
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Add a comment..."
             rows={2}
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 resize-none"
+            className="flex-1 bg-white/5 border border-white/6 rounded-lg px-3 py-2 text-sm text-[var(--color-cc-text-secondary)] resize-none"
           />
           <button
             onClick={handleAddComment}
             disabled={commentSaving || !commentText.trim()}
-            className="self-end bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+            className="self-end bg-blue-500 hover:bg-blue-600 disabled:bg-white/10 disabled:text-[var(--color-cc-text-muted)] text-[var(--color-cc-bg)] text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
           >
             {commentSaving ? '...' : 'Send'}
           </button>

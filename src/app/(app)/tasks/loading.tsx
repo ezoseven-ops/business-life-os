@@ -2,7 +2,7 @@ import { SkeletonHeader, SkeletonLine, SkeletonList } from '@/components/Skeleto
 
 export default function TasksLoading() {
   return (
-    <div className="min-h-dvh" style={{ backgroundColor: '#f9fafb' }}>
+    <div className="min-h-dvh" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
       <SkeletonHeader />
       <div className="px-4 py-4 max-w-lg mx-auto space-y-5 pb-24">
         {/* Status section header */}

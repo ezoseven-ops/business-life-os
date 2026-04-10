@@ -14,7 +14,7 @@ export default async function AppLayout({
   if (session.user.role === 'CLIENT') redirect('/portal')
 
   return (
-    <div className="min-h-dvh flex flex-col safe-top safe-bottom" style={{ backgroundColor: '#f9fafb' }}>
+    <div className="min-h-dvh flex flex-col safe-top safe-bottom" style={{ backgroundColor: 'var(--color-cc-bg)' }}>
       <main className="flex-1 pb-20">
         {children}
       </main>

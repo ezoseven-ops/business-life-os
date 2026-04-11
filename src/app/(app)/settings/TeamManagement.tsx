@@ -80,7 +80,7 @@ export function TeamManagement({
         <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">Team</h3>
         <button
           onClick={() => setShowInviteForm(!showInviteForm)}
-          className="text-xs font-semibold text-primary"
+          className="text-xs font-semibold text-[var(--color-cc-accent)]"
         >
           {showInviteForm ? 'Cancel' : '+ Invite'}
         </button>
@@ -91,14 +91,14 @@ export function TeamManagement({
 
       {/* Invite form */}
       {showInviteForm && (
-        <form onSubmit={handleInvite} className="space-y-3 bg-gray-50 rounded-xl p-3">
+        <form onSubmit={handleInvite} className="space-y-3 bg-[var(--color-cc-surface-subtle)] rounded-xl p-3">
           <input
             type="email"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="Email address"
             required
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-3 py-2 rounded-lg border border-[var(--color-cc-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-cc-accent)]/20"
           />
           <div className="flex gap-2">
             <button
@@ -106,8 +106,8 @@ export function TeamManagement({
               onClick={() => setInviteRole('TEAM')}
               className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
                 inviteRole === 'TEAM'
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-gray-200 text-gray-500'
+                  ? 'border-[var(--color-cc-accent)] bg-[var(--color-cc-accent)]/5 text-[var(--color-cc-accent)]'
+                  : 'border-[var(--color-cc-border)] text-[var(--color-cc-text-muted)]'
               }`}
             >
               Team Member
@@ -117,8 +117,8 @@ export function TeamManagement({
               onClick={() => setInviteRole('CLIENT')}
               className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
                 inviteRole === 'CLIENT'
-                  ? 'border-primary bg-primary/5 text-primary'
-                  : 'border-gray-200 text-gray-500'
+                  ? 'border-[var(--color-cc-accent)] bg-[var(--color-cc-accent)]/5 text-[var(--color-cc-accent)]'
+                  : 'border-[var(--color-cc-border)] text-[var(--color-cc-text-muted)]'
               }`}
             >
               Client
@@ -127,7 +127,7 @@ export function TeamManagement({
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-primary text-white rounded-lg text-sm font-semibold disabled:opacity-50"
+            className="w-full py-2 bg-[var(--color-cc-accent)] text-[var(--color-cc-bg)] rounded-lg text-sm font-semibold disabled:opacity-50"
           >
             {loading ? 'Sending...' : 'Send Invitation'}
           </button>
@@ -139,14 +139,14 @@ export function TeamManagement({
         {members.map((member) => (
           <div key={member.id} className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-xs font-bold text-primary">
+              <div className="w-8 h-8 rounded-full bg-[var(--color-cc-accent)]/10 flex items-center justify-center">
+                <span className="text-xs font-bold text-[var(--color-cc-accent)]">
                   {member.name?.charAt(0)?.toUpperCase() || '?'}
                 </span>
               </div>
               <div>
                 <p className="text-sm font-medium">{member.name || 'Unnamed'}</p>
-                <p className="text-[11px] text-gray-400">{member.email}</p>
+                <p className="text-[11px] text-[var(--color-cc-text-muted)]">{member.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export function TeamManagement({
                   ? 'bg-purple-100 text-purple-700'
                   : member.role === 'CLIENT'
                     ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600'
+                    : 'bg-[var(--color-cc-surface)] text-[var(--color-cc-text-secondary)]'
               }`}>
                 {member.role === 'TEAM' ? 'Team' : member.role.toLowerCase()}
               </span>
@@ -174,13 +174,13 @@ export function TeamManagement({
 
       {/* Pending invitations */}
       {pendingInvitations.length > 0 && (
-        <div className="pt-2 border-t border-gray-100">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Pending Invitations</p>
+        <div className="pt-2 border-t border-[var(--color-cc-border)]">
+          <p className="text-[10px] font-semibold text-[var(--color-cc-text-muted)] uppercase tracking-wide mb-2">Pending Invitations</p>
           {pendingInvitations.map((inv) => (
             <div key={inv.id} className="flex items-center justify-between py-1.5">
               <div>
-                <p className="text-sm text-gray-600">{inv.email}</p>
-                <p className="text-[10px] text-gray-400">
+                <p className="text-sm text-[var(--color-cc-text-secondary)]">{inv.email}</p>
+                <p className="text-[10px] text-[var(--color-cc-text-muted)]">
                   {inv.role === 'TEAM' ? 'Team' : 'Client'} &middot; by {inv.invitedBy.name || 'Unknown'}
                 </p>
               </div>

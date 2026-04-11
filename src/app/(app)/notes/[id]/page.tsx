@@ -20,7 +20,7 @@ export default async function NoteDetailPage({
   }
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-[var(--color-cc-bg)]">
       <Header title={note.title || 'Note'} backHref="/notes" />
       <NoteDetailClient note={note} />
     </div>

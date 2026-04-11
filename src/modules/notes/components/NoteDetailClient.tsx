@@ -95,11 +95,11 @@ export function NoteDetailClient({ note }: NoteDetailClientProps) {
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
           {cfg.label}
         </span>
-        <span className="text-xs text-gray-400">{formatRelativeTime(note.updatedAt)}</span>
+        <span className="text-xs text-[var(--color-cc-text-muted)]">{formatRelativeTime(note.updatedAt)}</span>
         {note.project && (
           <>
-            <span className="text-xs text-gray-300">&middot;</span>
-            <span className="text-xs text-gray-400">{note.project.name}</span>
+            <span className="text-xs text-[var(--color-cc-text-muted)]">&middot;</span>
+            <span className="text-xs text-[var(--color-cc-text-muted)]">{note.project.name}</span>
           </>
         )}
       </div>
@@ -111,7 +111,7 @@ export function NoteDetailClient({ note }: NoteDetailClientProps) {
             value={title}
             onChange={(e) => { setTitle(e.target.value); setError('') }}
             placeholder="Title"
-            className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-gray-300"
+            className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)]"
             autoFocus
             disabled={saving}
           />
@@ -120,7 +120,7 @@ export function NoteDetailClient({ note }: NoteDetailClientProps) {
             onChange={(e) => { setContent(e.target.value); setError('') }}
             placeholder="Start writing..."
             rows={16}
-            className="w-full text-base leading-relaxed bg-transparent outline-none resize-none placeholder:text-gray-300"
+            className="w-full text-base leading-relaxed bg-transparent outline-none resize-none placeholder:text-[var(--color-cc-text-muted)]"
             disabled={saving}
           />
           <InlineError message={error} />
@@ -136,14 +136,14 @@ export function NoteDetailClient({ note }: NoteDetailClientProps) {
               <button
                 onClick={handleCancel}
                 disabled={saving}
-                className="text-xs font-medium text-gray-400 px-3 py-1.5"
+                className="text-xs font-medium text-[var(--color-cc-text-muted)] px-3 py-1.5"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="text-xs font-semibold text-white bg-primary px-4 py-1.5 rounded-lg disabled:opacity-40"
+                className="text-xs font-semibold text-[var(--color-cc-bg)] bg-[var(--color-cc-accent)] px-4 py-1.5 rounded-lg disabled:opacity-40"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
@@ -152,18 +152,18 @@ export function NoteDetailClient({ note }: NoteDetailClientProps) {
         </div>
       ) : (
         <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-3">
+          <h2 className="text-xl font-bold text-[var(--color-cc-text)] mb-3">
             {note.title || 'Untitled'}
           </h2>
           {note.content ? (
-            <p className="text-base leading-relaxed text-gray-700 whitespace-pre-wrap">
+            <p className="text-base leading-relaxed text-[var(--color-cc-text-secondary)] whitespace-pre-wrap">
               {note.content}
             </p>
           ) : (
-            <p className="text-base text-gray-400 italic">No content</p>
+            <p className="text-base text-[var(--color-cc-text-muted)] italic">No content</p>
           )}
 
-          <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-6 mt-6 border-t border-[var(--color-cc-border)]">
             <button
               onClick={handleDelete}
               disabled={deleting}
@@ -173,7 +173,7 @@ export function NoteDetailClient({ note }: NoteDetailClientProps) {
             </button>
             <button
               onClick={() => setEditing(true)}
-              className="text-xs font-semibold text-primary px-3 py-1.5"
+              className="text-xs font-semibold text-[var(--color-cc-accent)] px-3 py-1.5"
             >
               Edit
             </button>

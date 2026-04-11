@@ -16,7 +16,7 @@ export default function AppError({
       action={
         <button
           onClick={reset}
-          className="px-6 py-3 bg-gray-900 text-white text-sm font-semibold rounded-xl active:scale-[0.98] transition-transform"
+          className="px-6 py-3 bg-[var(--color-cc-surface)] text-white text-sm font-semibold rounded-xl active:scale-[0.98] transition-transform"
         >
           Try again
         </button>

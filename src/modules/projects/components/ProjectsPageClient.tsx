@@ -18,7 +18,7 @@ export function ProjectsPageClient() {
           onClick={() => setShowForm(true)}
           className="w-full card card-hover flex items-center gap-3 px-4 py-3.5 text-left group hover:border-[var(--color-cc-accent)]/30"
         >
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-[var(--color-cc-accent)]/10 flex items-center justify-center">
             <svg className="w-4 h-4 text-[var(--color-cc-text-muted)] group-hover:text-[var(--color-cc-accent)]" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>

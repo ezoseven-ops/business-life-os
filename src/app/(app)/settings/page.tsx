@@ -55,7 +55,7 @@ export default async function SettingsPage({
         <section className="rounded-xl p-4 space-y-3" style={{ background: 'var(--color-cc-surface-subtle)', border: '1px solid var(--color-cc-border)' }}>
           <h3 className="text-sm font-semibold uppercase tracking-wide" style={{ color: 'var(--color-cc-text-muted)' }}>Profile</h3>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary-light)' }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-cc-accent)' }}>
               <span className="text-lg font-bold" style={{ color: 'var(--color-cc-accent)' }}>
                 {session.user.name?.charAt(0)?.toUpperCase() || '?'}
               </span>

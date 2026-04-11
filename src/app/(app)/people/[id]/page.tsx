@@ -36,7 +36,7 @@ export default async function PersonDetailPage({
 
         {/* Identity */}
         <div className="flex items-center gap-3.5 px-1">
-          <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-primary-light)' }}>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-cc-accent)' }}>
             <span className="text-base font-bold" style={{ color: 'var(--color-cc-accent)' }}>{person.name.charAt(0).toUpperCase()}</span>
           </div>
           <div className="flex-1 min-w-0">

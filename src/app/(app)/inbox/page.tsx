@@ -22,7 +22,7 @@ export default async function InboxPage() {
             title="No messages yet"
             description="Connect a messaging channel in Settings to get started."
             action={
-              <Link href="/settings" className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: 'var(--color-cc-accent)' }}>
+              <Link href="/settings" className="px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--color-cc-bg)]" style={{ backgroundColor: 'var(--color-cc-accent)' }}>
                 Settings
               </Link>
             }
@@ -40,7 +40,7 @@ export default async function InboxPage() {
                   style={{ background: 'var(--color-cc-surface-subtle)', border: '1px solid var(--color-cc-border)' }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-primary-light)' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-cc-accent)' }}>
                       <span className="text-sm font-semibold" style={{ color: 'var(--color-cc-accent)' }}>
                         {person.name.charAt(0).toUpperCase()}
                       </span>

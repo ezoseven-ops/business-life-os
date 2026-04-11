@@ -36,7 +36,7 @@ export default async function ThreadPage({
       {/* Person info bar */}
       <div className="bg-[var(--color-cc-bg)] border-b border-white/6 px-4 py-2.5">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-[var(--color-cc-accent)]/10 flex items-center justify-center">
             <span className="text-xs font-semibold text-[var(--color-cc-accent)]">{person.name.charAt(0).toUpperCase()}</span>
           </div>
           <div className="flex-1 min-w-0">

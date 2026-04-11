@@ -61,7 +61,7 @@ export default function NewEventPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-[var(--color-cc-bg)]">
       <Header
         title="New Event"
         backHref={projectId ? "/projects/" + projectId : '/calendar'}
@@ -69,7 +69,7 @@ export default function NewEventPage() {
           <button
             onClick={handleSave}
             disabled={saving || !title.trim()}
-            className="text-sm font-semibold text-primary disabled:text-gray-300"
+            className="text-sm font-semibold text-[var(--color-cc-accent)] disabled:text-[var(--color-cc-text-muted)]"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
@@ -82,7 +82,7 @@ export default function NewEventPage() {
           placeholder="Event title"
           value={title}
           onChange={(e) => { setTitle(e.target.value); setError('') }}
-          className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-gray-300"
+          className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)]"
           autoFocus
           disabled={saving}
         />
@@ -93,31 +93,31 @@ export default function NewEventPage() {
             type="checkbox"
             checked={allDay}
             onChange={(e) => setAllDay(e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+            className="w-4 h-4 rounded border-[var(--color-cc-border)] text-[var(--color-cc-accent)] focus:ring-[var(--color-cc-accent)]"
             disabled={saving}
           />
-          <span className="text-sm text-gray-600">All day</span>
+          <span className="text-sm text-[var(--color-cc-text-secondary)]">All day</span>
         </label>
 
         {/* Date/time inputs */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">Start</label>
+            <label className="block text-xs font-medium text-[var(--color-cc-text-muted)] mb-1">Start</label>
             <input
               type={allDay ? 'date' : 'datetime-local'}
               value={allDay ? startAt.slice(0, 10) : startAt}
               onChange={(e) => setStartAt(e.target.value)}
-              className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
+              className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]"
               disabled={saving}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">End</label>
+            <label className="block text-xs font-medium text-[var(--color-cc-text-muted)] mb-1">End</label>
             <input
               type={allDay ? 'date' : 'datetime-local'}
               value={allDay ? endAt.slice(0, 10) : endAt}
               onChange={(e) => setEndAt(e.target.value)}
-              className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-primary"
+              className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)]"
               disabled={saving}
             />
           </div>
@@ -128,7 +128,7 @@ export default function NewEventPage() {
           placeholder="Location"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-primary placeholder:text-gray-400"
+          className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)] placeholder:text-[var(--color-cc-text-muted)]"
           disabled={saving}
         />
 
@@ -137,7 +137,7 @@ export default function NewEventPage() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
-          className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-primary resize-none placeholder:text-gray-400"
+          className="w-full text-sm border border-border rounded-lg px-3 py-2 outline-none focus:border-[var(--color-cc-accent)] resize-none placeholder:text-[var(--color-cc-text-muted)]"
           disabled={saving}
         />
 

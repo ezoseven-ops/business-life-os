@@ -42,7 +42,7 @@ export function AddProjectForm({ onCancel }: { onCancel: () => void }) {
         value={name}
         onChange={(e) => { setName(e.target.value); setError('') }}
         placeholder="Project name"
-        className="w-full text-sm font-semibold bg-transparent outline-none placeholder:text-gray-400"
+        className="w-full text-sm font-semibold bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)]"
         autoFocus
         disabled={saving}
       />
@@ -51,18 +51,18 @@ export function AddProjectForm({ onCancel }: { onCancel: () => void }) {
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Short description (optional)"
-        className="w-full text-sm bg-transparent outline-none placeholder:text-gray-400"
+        className="w-full text-sm bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)]"
         disabled={saving}
       />
       <InlineError message={error} />
       <div className="flex justify-end gap-2 pt-1">
-        <button type="button" onClick={onCancel} disabled={saving} className="text-xs text-gray-400 font-medium px-3 py-2">
+        <button type="button" onClick={onCancel} disabled={saving} className="text-xs text-[var(--color-cc-text-muted)] font-medium px-3 py-2">
           Cancel
         </button>
         <button
           type="submit"
           disabled={!name.trim() || saving}
-          className="text-xs font-semibold text-white bg-primary px-4 py-2 rounded-xl disabled:opacity-40"
+          className="text-xs font-semibold text-[var(--color-cc-bg)] bg-[var(--color-cc-accent)] px-4 py-2 rounded-xl disabled:opacity-40"
         >
           {saving ? '...' : 'Create'}
         </button>

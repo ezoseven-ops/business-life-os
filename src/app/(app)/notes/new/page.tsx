@@ -38,7 +38,7 @@ export default function QuickCapturePage() {
   }
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-[var(--color-cc-bg)]">
       <Header
         title="Quick Note"
         backHref="/"
@@ -46,7 +46,7 @@ export default function QuickCapturePage() {
           <button
             onClick={handleSave}
             disabled={saving || (!content.trim() && !title.trim())}
-            className="text-sm font-semibold text-primary disabled:text-gray-300"
+            className="text-sm font-semibold text-[var(--color-cc-accent)] disabled:text-[var(--color-cc-text-muted)]"
           >
             {saving ? 'Saving...' : 'Save'}
           </button>
@@ -59,7 +59,7 @@ export default function QuickCapturePage() {
           placeholder="Title"
           value={title}
           onChange={(e) => { setTitle(e.target.value); setError('') }}
-          className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-gray-300"
+          className="w-full text-xl font-bold bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)]"
           autoFocus
           disabled={saving}
         />
@@ -68,7 +68,7 @@ export default function QuickCapturePage() {
           value={content}
           onChange={(e) => { setContent(e.target.value); setError('') }}
           rows={16}
-          className="w-full text-base leading-relaxed bg-transparent outline-none resize-none placeholder:text-gray-300"
+          className="w-full text-base leading-relaxed bg-transparent outline-none resize-none placeholder:text-[var(--color-cc-text-muted)]"
           disabled={saving}
         />
         {error && (

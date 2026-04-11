@@ -7,7 +7,7 @@ import { formatRelativeTime, truncate } from '@/lib/utils'
 
 const typeConfig: Record<string, { icon: string; color: string; bg: string }> = {
   QUICK: { icon: 'Q', color: 'var(--color-cc-risk)', bg: 'var(--color-cc-risk-muted)' },
-  MEETING: { icon: 'M', color: 'var(--color-cc-accent)', bg: 'var(--color-primary-light)' },
+  MEETING: { icon: 'M', color: 'var(--color-cc-accent)', bg: 'var(--color-cc-accent-muted)' },
   VOICE: { icon: 'V', color: 'var(--color-cc-fire)', bg: 'var(--color-cc-fire-muted)' },
 }
 
@@ -34,7 +34,7 @@ export default async function NotesPage() {
             title="No notes yet"
             description="Capture ideas, meeting notes, and voice memos."
             action={
-              <Link href="/notes/new" className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white" style={{ backgroundColor: 'var(--color-cc-accent)' }}>
+              <Link href="/notes/new" className="px-5 py-2.5 rounded-xl text-sm font-semibold text-[var(--color-cc-bg)]" style={{ backgroundColor: 'var(--color-cc-accent)' }}>
                 New note
               </Link>
             }

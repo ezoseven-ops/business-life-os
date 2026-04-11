@@ -60,7 +60,7 @@ export function AddPersonInline({ onCancel }: AddPersonInlineProps) {
         value={name}
         onChange={(e) => { setName(e.target.value); setError('') }}
         placeholder="Name *"
-        className="w-full text-sm font-medium bg-transparent outline-none placeholder:text-gray-400"
+        className="w-full text-sm font-medium bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)]"
         autoFocus
         disabled={saving}
       />
@@ -70,7 +70,7 @@ export function AddPersonInline({ onCancel }: AddPersonInlineProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
-          className="text-sm bg-transparent outline-none placeholder:text-gray-400 border border-border rounded-lg px-3 py-2"
+          className="text-sm bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)] border border-border rounded-lg px-3 py-2"
           disabled={saving}
         />
         <input
@@ -78,7 +78,7 @@ export function AddPersonInline({ onCancel }: AddPersonInlineProps) {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="Phone"
-          className="text-sm bg-transparent outline-none placeholder:text-gray-400 border border-border rounded-lg px-3 py-2"
+          className="text-sm bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)] border border-border rounded-lg px-3 py-2"
           disabled={saving}
         />
       </div>
@@ -87,7 +87,7 @@ export function AddPersonInline({ onCancel }: AddPersonInlineProps) {
         value={company}
         onChange={(e) => setCompany(e.target.value)}
         placeholder="Company"
-        className="w-full text-sm bg-transparent outline-none placeholder:text-gray-400 border border-border rounded-lg px-3 py-2"
+        className="w-full text-sm bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)] border border-border rounded-lg px-3 py-2"
         disabled={saving}
       />
       <div className="grid grid-cols-2 gap-2">
@@ -96,7 +96,7 @@ export function AddPersonInline({ onCancel }: AddPersonInlineProps) {
           value={telegramId}
           onChange={(e) => setTelegramId(e.target.value)}
           placeholder="Telegram ID"
-          className="text-sm bg-transparent outline-none placeholder:text-gray-400 border border-border rounded-lg px-3 py-2"
+          className="text-sm bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)] border border-border rounded-lg px-3 py-2"
           disabled={saving}
         />
         <input
@@ -104,21 +104,21 @@ export function AddPersonInline({ onCancel }: AddPersonInlineProps) {
           value={whatsappId}
           onChange={(e) => setWhatsappId(e.target.value)}
           placeholder="WhatsApp ID"
-          className="text-sm bg-transparent outline-none placeholder:text-gray-400 border border-border rounded-lg px-3 py-2"
+          className="text-sm bg-transparent outline-none placeholder:text-[var(--color-cc-text-muted)] border border-border rounded-lg px-3 py-2"
           disabled={saving}
         />
       </div>
       <InlineError message={error} />
       <div className="flex items-center justify-end gap-2">
         {onCancel && (
-          <button type="button" onClick={onCancel} disabled={saving} className="text-xs text-gray-400 font-medium px-3 py-2">
+          <button type="button" onClick={onCancel} disabled={saving} className="text-xs text-[var(--color-cc-text-muted)] font-medium px-3 py-2">
             Cancel
           </button>
         )}
         <button
           type="submit"
           disabled={!name.trim() || saving}
-          className="text-xs font-semibold text-white bg-primary px-4 py-2 rounded-xl disabled:opacity-40"
+          className="text-xs font-semibold text-[var(--color-cc-bg)] bg-[var(--color-cc-accent)] px-4 py-2 rounded-xl disabled:opacity-40"
         >
           {saving ? '...' : 'Add Person'}
         </button>

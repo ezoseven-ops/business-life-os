@@ -245,7 +245,7 @@ export function GoogleCalendarSettings({
       {/* Not configured state */}
       {connectionState === 'not_configured' && (
         <p className="text-sm text-text-secondary">
-          Google Calendar integration is not configured. Set <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">GOOGLE_CALENDAR_CLIENT_ID</code> and <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">GOOGLE_CALENDAR_CLIENT_SECRET</code> environment variables.
+          Google Calendar integration is not configured. Set <code className="text-xs bg-[var(--color-cc-surface)] px-1 py-0.5 rounded">GOOGLE_CALENDAR_CLIENT_ID</code> and <code className="text-xs bg-[var(--color-cc-surface)] px-1 py-0.5 rounded">GOOGLE_CALENDAR_CLIENT_SECRET</code> environment variables.
         </p>
       )}
 
@@ -259,7 +259,7 @@ export function GoogleCalendarSettings({
             <button
               onClick={handleConnect}
               disabled={connecting}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-border bg-white font-medium text-sm transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-border bg-[var(--color-cc-surface)] font-medium text-sm transition-colors"
               style={{ minHeight: 48, opacity: connecting ? 0.6 : 1 }}
             >
               {connecting ? (
@@ -289,7 +289,7 @@ export function GoogleCalendarSettings({
           <button
             onClick={handleSync}
             disabled={syncState === 'syncing'}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-medium text-sm transition-colors"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-[var(--color-cc-accent)] text-[var(--color-cc-bg)] font-medium text-sm transition-colors"
             style={{ minHeight: 48, opacity: syncState === 'syncing' ? 0.6 : 1 }}
           >
             {syncState === 'syncing' ? (
@@ -340,14 +340,14 @@ export function GoogleCalendarSettings({
                     className="flex items-center justify-between gap-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-[var(--color-cc-text)] truncate">
                         {entry.eventTitle}
                       </p>
                       <p className="text-xs text-red-600 truncate">
                         {entry.syncError}
                       </p>
                       {entry.retryCount > 0 && (
-                        <p className="text-[10px] text-gray-500">
+                        <p className="text-[10px] text-[var(--color-cc-text-muted)]">
                           Retried {entry.retryCount}x
                         </p>
                       )}
@@ -355,7 +355,7 @@ export function GoogleCalendarSettings({
                     <button
                       onClick={() => handleRetrySync(entry.eventId)}
                       disabled={retryingId === entry.eventId}
-                      className="shrink-0 flex items-center justify-center rounded-lg bg-white border border-red-200 text-xs font-medium text-red-700 transition-colors"
+                      className="shrink-0 flex items-center justify-center rounded-lg bg-[var(--color-cc-surface)] border border-red-200 text-xs font-medium text-red-700 transition-colors"
                       style={{ minHeight: 36, minWidth: 60, opacity: retryingId === entry.eventId ? 0.5 : 1 }}
                     >
                       {retryingId === entry.eventId ? <Spinner /> : 'Retry'}
@@ -371,7 +371,7 @@ export function GoogleCalendarSettings({
             <button
               onClick={handleVerify}
               disabled={verifying}
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-white text-sm font-medium text-text-secondary transition-colors"
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-[var(--color-cc-surface)] text-sm font-medium text-text-secondary transition-colors"
               style={{ minHeight: 44, opacity: verifying ? 0.6 : 1 }}
             >
               {verifying ? <Spinner /> : null}
@@ -401,7 +401,7 @@ export function GoogleCalendarSettings({
           <div className="flex gap-2">
             <button
               onClick={handleVerify}
-              className="flex-1 flex items-center justify-center rounded-xl border border-border bg-white text-sm font-medium"
+              className="flex-1 flex items-center justify-center rounded-xl border border-border bg-[var(--color-cc-surface)] text-sm font-medium"
               style={{ minHeight: 44 }}
             >
               Retry
@@ -427,9 +427,9 @@ export function GoogleCalendarSettings({
 
 function StatusBadge({ state }: { state: ConnectionState }) {
   const config: Record<ConnectionState, { label: string; bg: string; text: string }> = {
-    loading: { label: 'Checking...', bg: 'bg-gray-100', text: 'text-gray-600' },
+    loading: { label: 'Checking...', bg: 'bg-[var(--color-cc-surface)]', text: 'text-[var(--color-cc-text-secondary)]' },
     connected: { label: 'Connected', bg: 'bg-green-100', text: 'text-green-700' },
-    disconnected: { label: 'Not connected', bg: 'bg-gray-100', text: 'text-gray-600' },
+    disconnected: { label: 'Not connected', bg: 'bg-[var(--color-cc-surface)]', text: 'text-[var(--color-cc-text-secondary)]' },
     error: { label: 'Error', bg: 'bg-red-100', text: 'text-red-700' },
     not_configured: { label: 'Not configured', bg: 'bg-amber-100', text: 'text-amber-700' },
   }

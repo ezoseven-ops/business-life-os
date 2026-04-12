@@ -2,7 +2,7 @@
 
 Version: 1.0
 Status: DESIGN — NOT YET IMPLEMENTED
-Reference: docs/BUSINESS_LIFE_OS_REFERENCE.md (sections 13.1, 14, 15.1)
+Reference: docs/BUSINESS_LIFE_OS_REFERENCE.md (sections 7, 8, 13.1, 13.2, 13.5, 14, 15.1, 16)
 Etap: 1 — Rdzen Operacyjny Systemu (highest priority)
 
 ---
@@ -67,6 +67,8 @@ Queries required:
 
 Each task carries: id, title, projectId, projectName, priority, status, dueDate, assigneeId, assigneeName, source.
 
+Each task's assignee resolves to a Person entity (section 8 of reference). The Open Day pipeline must resolve assigneeId to the Person record, not just carry a flat name string.
+
 ### 2.2 Projects
 
 Source: Project module (section 4.1)
@@ -79,6 +81,7 @@ Queries required:
 | P-PRIORITY | Projects by priority | status = ACTIVE, ordered by priority DESC |
 | P-DEADLINE-NEAR | Projects with approaching deadline | deadline within 7 days AND status = ACTIVE |
 | P-STALLED | Stalled projects | status = ACTIVE AND no task activity in 7 days |
+| P-TEAM | Project team members | Person records assigned to each active project |
 
 Each project carries: id, name, status, phase, priority, deadline, taskCountTotal, taskCountDone, taskCountOverdue.
 
@@ -108,6 +111,8 @@ Queries required:
 | M-AWAITING | Messages awaiting response | awaitingResponse = true AND respondedAt = null |
 
 Each message carries: id, personId, personName, channel (Telegram/WhatsApp), projectId, projectName, snippet, receivedAt.
+
+Each message's person resolves to a Person entity. The pipeline must carry the Person's canonical data (preferred channel, projectIds, reliability context) when available.
 
 ### 2.5 Notes
 
@@ -159,6 +164,7 @@ ProjectDayContext {
   awaitingResponses: Message[]
   unreadMessages: Message[]
   recentNotes: Note[]
+  projectTeam: Person[]       // people assigned to this project (M-1, M-3)
 }
 ```
 
@@ -172,11 +178,14 @@ Priority is computed per project, then items within each project are sorted.
 
 Score = basePriority + overdueWeight + deadlineWeight + blockerWeight
 
-Where:
+Default weights (MUST be configurable, not hardcoded):
 - basePriority: URGENT=40, HIGH=30, MEDIUM=20, LOW=10
-- overdueWeight: count(tasksOverdue) * 5 (max 25)
-- deadlineWeight: if projectDeadline within 3 days → 15, within 7 days → 8, else → 0
-- blockerWeight: count(tasksBlocked) * 8 (max 24)
+- overdueWeight: count(tasksOverdue) * overdueMultiplier (default: 5, max: 25)
+- deadlineWeight: configurable thresholds (default: 3d→15, 7d→8)
+- blockerWeight: count(tasksBlocked) * blockerMultiplier (default: 8, max: 24)
+
+These values are initial defaults subject to tuning during implementation.
+They MUST be stored in DayRitualConfig, not hardcoded.
 
 Projects are sorted by Score DESC. Ties broken by projectName ASC.
 
@@ -250,14 +259,14 @@ CompletionAnalysis {
   // Delivered
   tasksCompletedToday: Task[]          // T-COMPLETED-TODAY
   tasksCompletedCount: number
-
+  
   // Not delivered
   tasksFailedToday: Task[]             // T-FAILED-TODAY
   tasksFailedCount: number
-
+  
   // Metrics
   completionRate: number               // completed / (completed + failed) * 100
-
+  
   // New since morning
   newTasksAddedToday: Task[]           // tasks created today not in Open Day baseline
   newOverdueCount: number              // overdue count now - overdue count at Open Day
@@ -272,10 +281,10 @@ Tasks that carry over to tomorrow:
 CarryOver {
   // Automatic carry-over: failed today → reschedule to tomorrow
   autoCarryOver: Task[]     // dueDate updated from today to tomorrow
-
+  
   // Persistent overdue: was overdue at Open Day AND still overdue now
   persistentOverdue: Task[] // overdue for 2+ days
-
+  
   // Escalation candidates: overdue for 5+ days OR blocked for 3+ days
   escalationCandidates: Task[]
 }
@@ -293,6 +302,12 @@ Risk triggers (deterministic flags):
 - Follow-up pending for 72+ hours → COMMUNICATION_RISK
 - Project with 0 task completions in 5+ days → STALL_RISK
 - Multiple URGENT tasks failed today → EXECUTION_RISK
+
+Note: This risk taxonomy is the initial set. It is NOT exhaustive.
+The implementation should support extensible risk types.
+Additional risk types may be added based on operational experience.
+The risk detection engine should be designed as a pluggable system
+where new risk detectors can be added without modifying the pipeline.
 
 AI role: generate a narrative explanation of each risk and suggest concrete next action (see section 5).
 
@@ -329,6 +344,7 @@ OpenDayBriefing {
     totalTasksOverdue: number
     totalEventsToday: number
     totalFollowUps: number
+    totalUnreadMessages: number
     criticalItemCount: number
   }
 
@@ -351,15 +367,16 @@ OpenDayBriefing {
       projectName: string
       projectPriority: string
       projectScore: number
-
+      projectTeam: Person[]     // people assigned to this project
+      
       tasks {
         overdue: Task[]       // sorted by dueDate ASC (oldest first)
         today: Task[]         // sorted by priority DESC
         blocked: Task[]
       }
-
+      
       events: Event[]         // sorted by startTime ASC
-
+      
       followUps: Message[]    // sorted by receivedAt ASC (oldest first)
       awaitingResponses: Message[]
     }
@@ -385,7 +402,7 @@ OpenDayBriefing {
 }
 ```
 
-**Section order is fixed**: criticalItems → todayByProject → tomorrowPreview → globalPriorities. This order reflects operational priority: threats first, then today's work, then tomorrow's preparation, then strategic view.
+Default section order (recommended, may be configurable per operator in future): criticalItems → todayByProject → tomorrowPreview → globalPriorities. This order reflects operational priority: threats first, then today's work, then tomorrow's preparation, then strategic view.
 
 ### 4.2 CloseDayBriefing — Exact Structure
 
@@ -474,7 +491,7 @@ CloseDayBriefing {
 }
 ```
 
-**Section order is fixed**: delivered → notDelivered → carryOver → followUps → escalations → risks → tomorrowOutlook.
+Default section order (recommended, may be configurable per operator in future): delivered → notDelivered → carryOver → followUps → escalations → risks → tomorrowOutlook.
 
 ---
 
@@ -526,6 +543,28 @@ The AI must:
 - Reference project names and people by name
 - Highlight the single most important thing in the first sentence
 
+### 5.5 Operator Profile Integration
+
+When the operator profile ("O mnie") is available (section 13.5 of reference),
+the AI layer receives it as additional context for narrative generation.
+
+Input: OperatorProfile {
+  decisionStyle: string
+  communicationPreferences: string
+  workingStyle: string
+  constraints: string
+  personalInstructions: string
+}
+
+Effect on AI:
+- Open Day narrative adapts tone to operator's communication preferences
+- Suggested actions consider operator's decision style
+- Risk framing considers operator's constraints
+- Language follows operator's personal instruction layer
+
+When not available: AI uses default operator tone (concise, direct, action-oriented).
+This integration point must be present in the spec even if "O mnie" is implemented after Open Day.
+
 ---
 
 ## 6. FUTURE VOICE INTEGRATION HOOK
@@ -554,6 +593,8 @@ Close Day sections:
 5. Escalations
 6. Risks
 7. Tomorrow Outlook
+
+The Voice Briefing Agent will use projectTeam and Person availability data to answer delegation queries. This data is provided in the briefing structure but delegation logic is part of the Voice Agent spec, not this spec.
 
 This numbering enables future voice commands like: "rozwi punkt 2" (expand section 2), "co jest dzis najpilniejsze" (maps to section 1 — Critical Items), "pokaz mi tylko rzeczy krytyczne" (filter to Critical Items only).
 
@@ -637,6 +678,14 @@ Project: id, name, status, phase, priority, deadline
 Event: id, title, startTime, endTime, projectId, attendees
 Message: id, personId, channel, projectId, snippet, receivedAt, readAt, followUpRequired, followUpCompletedAt, awaitingResponse, respondedAt
 Note: id, title, projectId, createdAt, hasActionItems
+Person: id, name, channels, projectIds, skills, availability, reliability
+
+IMPORTANT: All person references (assigneeId on Task, personId on Message)
+resolve to the Person entity, NOT to User. Per reference section 8:
+- Person = canonical identity
+- User = auth record
+A task assignee or message sender may be a Person without a User account.
+The system must never assume every person has a login.
 
 Fields that may not exist yet and will need to be added or derived:
 - Task.status: needs BLOCKED value
@@ -738,19 +787,32 @@ DayRitualConfig {
   preferredCloseTime: string | null   // e.g. "18:00"
   timezone: string                    // e.g. "Europe/Warsaw"
 
-  // Thresholds (affect deterministic computations)
-  overdueEscalationDays: number       // default: 5
-  blockedEscalationDays: number       // default: 3
-  followUpStaleDays: number           // default: 3 (72 hours)
-  deadlineWarningDays: number         // default: 7
-  stalledProjectDays: number          // default: 7
-  criticalOverdueDays: number         // default: 3
-  lowCompletionRateThreshold: number  // default: 30 (percent)
+  // Thresholds — INITIAL DEFAULTS (tune during implementation)
+  overdueEscalationDays: number       // initial: 5
+  blockedEscalationDays: number       // initial: 3
+  followUpStaleDays: number           // initial: 3 (72 hours)
+  deadlineWarningDays: number         // initial: 7
+  stalledProjectDays: number          // initial: 7
+  criticalOverdueDays: number         // initial: 3
+  lowCompletionRateThreshold: number  // initial: 30 (percent)
+
+  // Priority scoring weights (affect project ordering)
+  priorityWeights: {
+    urgent: number      // default: 40
+    high: number        // default: 30
+    medium: number      // default: 20
+    low: number         // default: 10
+    overdueMultiplier: number   // default: 5
+    overdueMax: number          // default: 25
+    deadlineClose: number       // default: 15 (within 3 days)
+    deadlineMedium: number      // default: 8 (within 7 days)
+    blockerMultiplier: number   // default: 8
+    blockerMax: number          // default: 24
+  }
 
   // AI behavior
   aiLanguage: string                  // default: "pl" (Polish)
-  aiTone: OPERATOR | CASUAL           // default: OPERATOR
-  aiMaxSummaryLength: number          // default: 500 (characters)
+  aiSummaryGuidance: string           // default: "3-5 sentences, concise, action-oriented"
 }
 ```
 

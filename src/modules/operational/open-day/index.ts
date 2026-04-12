@@ -3,6 +3,7 @@
  *
  * Phase B: Query layer + deterministic builder
  * Phase C: AI summary generation + DayRecord persistence
+ * Phase D: App-facing server actions
  */
 
 // Types
@@ -40,3 +41,6 @@ export type { SummaryResult } from './open-day.summary'
 // Service (Phase C orchestration)
 export { runOpenDayForUser, getOpenDayRecord } from './open-day.service'
 export type { OpenDayResult } from './open-day.service'
+
+// Server Actions (Phase D entrypoints)
+export { executeOpenDayAction, getOpenDayAction } from './open-day.actions'

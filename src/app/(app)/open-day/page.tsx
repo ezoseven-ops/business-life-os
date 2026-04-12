@@ -86,7 +86,7 @@ export default function OpenDayPage() {
       const res = await getOpenDayAction(dateStr)
       if (res.success) {
         if (res.data) {
-          setExisting(res.data as ExistingRecord)
+          setExisting(res.data as unknown as ExistingRecord)
           setMode('loaded')
         } else {
           setError('No Open Day record found for this date.')

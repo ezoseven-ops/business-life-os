@@ -14,6 +14,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { runOpenDayQueries } from './open-day.queries'
 import { buildOpenDayBriefing } from './open-day.builder'
 import { generateOpenDaySummary } from './open-day.summary'
@@ -160,11 +161,11 @@ export async function runOpenDayForUser(
       userId,
       date: dateOnly,
       type: 'OPEN_DAY',
-      data: briefing as unknown as Record<string, unknown>,
+      data: briefing as unknown as Prisma.InputJsonValue,
       aiSummary: summaryResult.aiNarrative,
     },
     update: {
-      data: briefing as unknown as Record<string, unknown>,
+      data: briefing as unknown as Prisma.InputJsonValue,
       aiSummary: summaryResult.aiNarrative,
     },
   })

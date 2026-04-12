@@ -2,6 +2,7 @@
  * Open Day / Close Day — Public API
  *
  * Phase B: Query layer + deterministic builder
+ * Phase C: AI summary generation + DayRecord persistence
  */
 
 // Types
@@ -31,3 +32,11 @@ export { runOpenDayQueries } from './open-day.queries'
 
 // Builder
 export { buildOpenDayBriefing } from './open-day.builder'
+
+// Summary
+export { generateOpenDaySummary } from './open-day.summary'
+export type { SummaryResult } from './open-day.summary'
+
+// Service (Phase C orchestration)
+export { runOpenDayForUser, getOpenDayRecord } from './open-day.service'
+export type { OpenDayResult } from './open-day.service'

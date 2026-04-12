@@ -129,13 +129,13 @@ export interface OpenDayBriefing {
   }
 
   summary: {
+    aiNarrative?: string // populated by Phase C AI summary generator; absent in builder output
     totalTasksToday: number
     totalTasksOverdue: number
     totalEventsToday: number
     totalFollowUps: number
     totalUnreadMessages: number
     criticalItemCount: number
-    // aiNarrative is omitted — Phase C concern
   }
 
   criticalItems: CriticalItem[]

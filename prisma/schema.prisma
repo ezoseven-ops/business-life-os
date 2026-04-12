@@ -74,6 +74,7 @@ model User {
   sentInvitations  Invitation[]    @relation("InvitedBy")
   eventAttendees   EventAttendee[]
   linkedPerson     Person?         @relation("PersonUser")
+  dayRecords       DayRecord[]
 
   @@index([workspaceId])
   @@index([email])
@@ -144,6 +145,7 @@ model Project {
   workspaceId     String
   ownerId         String
   ventureId       String?
+  deadline        DateTime?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -222,6 +224,7 @@ enum TaskStatus {
   TODO
   IN_PROGRESS
   WAITING
+  BLOCKED
   DONE
 }
 
@@ -238,8 +241,9 @@ model Note {
   id          String   @id @default(cuid())
   title       String?
   content     String   @default("")
-  type        NoteType @default(QUICK)
-  projectId   String?
+  type           NoteType @default(QUICK)
+  hasActionItems Boolean  @default(false)
+  projectId      String?
   workspaceId String
   authorId    String
   createdAt   DateTime @default(now())
@@ -478,10 +482,15 @@ model Message {
   mediaUrl    String?
   status      MessageStatus    @default(SENT)
   rawPayload  Json?
-  personId    String?
-  workspaceId String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  personId           String?
+  workspaceId        String
+  readAt             DateTime?
+  followUpRequired   Boolean          @default(false)
+  followUpCompletedAt DateTime?
+  awaitingResponse   Boolean          @default(false)
+  respondedAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   person    Person?   @relation(fields: [personId], references: [id], onDelete: SetNull)
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -606,6 +615,28 @@ enum EventAttendeeStatus {
   PENDING
   ACCEPTED
   DECLINED
+}
+
+// ─── DAY RECORDS (Open Day / Close Day) ───
+
+model DayRecord {
+  id        String        @id @default(uuid())
+  userId    String
+  date      DateTime      @db.Date
+  type      DayRecordType
+  data      Json
+  aiSummary String        @db.Text
+  createdAt DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, type])
+  @@index([userId, date])
+}
+
+enum DayRecordType {
+  OPEN_DAY
+  CLOSE_DAY
 }
 
 // ─── AI ───

@@ -31,17 +31,6 @@ import { DEFAULT_OPEN_DAY_CONFIG } from './open-day.types'
 const UNASSIGNED_PROJECT_ID = '_UNASSIGNED'
 const UNASSIGNED_PROJECT_NAME = '_UNASSIGNED'
 
-const PRIORITY_BASE: Record<string, number> = {
-  URGENT: 40,
-  HIGH: 30,
-  MEDIUM: 20,
-  LOW: 10,
-  P0: 40,
-  P1: 30,
-  P2: 20,
-  P3: 10,
-}
-
 const DAYS_OF_WEEK = [
   'Sunday',
   'Monday',
@@ -78,8 +67,14 @@ function computeProjectScore(
   date: Date,
   weights: PriorityWeights,
 ): number {
-  // Base priority from project priority enum
-  const base = PRIORITY_BASE[ctx.priority] ?? weights.medium
+  // Base priority from configurable weights (spec: "MUST be configurable, not hardcoded")
+  const priorityKey = ctx.priority.toUpperCase()
+  const base =
+    priorityKey === 'URGENT' ? weights.urgent :
+    priorityKey === 'HIGH'   ? weights.high :
+    priorityKey === 'MEDIUM' ? weights.medium :
+    priorityKey === 'LOW'    ? weights.low :
+    weights.low // safe fallback for unknown priority values
 
   // Overdue weight: count * multiplier, capped
   const overdueWeight = Math.min(
@@ -316,6 +311,24 @@ function buildProjectBuckets(
   // Distribute notes
   for (const n of data.notesRecent) {
     getBucket(n.projectId).recentNotes.push(n)
+  }
+
+  // Enforce task-level sorting within each bucket (spec 3.1 Step 3):
+  // OVERDUE → oldest dueDate first; TODAY → priority DESC; BLOCKED → priority DESC
+  const priorityRank: Record<string, number> = { URGENT: 4, HIGH: 3, MEDIUM: 2, LOW: 1 }
+
+  for (const bucket of buckets.values()) {
+    bucket.tasksOverdue.sort((a, b) => {
+      const aTime = a.dueDate?.getTime() ?? 0
+      const bTime = b.dueDate?.getTime() ?? 0
+      return aTime - bTime // oldest first
+    })
+    bucket.tasksToday.sort((a, b) => {
+      return (priorityRank[b.priority] ?? 0) - (priorityRank[a.priority] ?? 0)
+    })
+    bucket.tasksBlocked.sort((a, b) => {
+      return (priorityRank[b.priority] ?? 0) - (priorityRank[a.priority] ?? 0)
+    })
   }
 
   return buckets

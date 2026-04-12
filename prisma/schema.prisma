@@ -75,6 +75,7 @@ model User {
   eventAttendees   EventAttendee[]
   linkedPerson     Person?         @relation("PersonUser")
   dayRecords       DayRecord[]
+  dayRitualConfig  DayRitualConfig?
 
   @@index([workspaceId])
   @@index([email])
@@ -154,6 +155,7 @@ model Project {
   tasks          Task[]
   notes          Note[]
   events         Event[]
+  messages       Message[]
   projectMembers ProjectMember[]
   projectPeople  ProjectPerson[]
 
@@ -190,6 +192,7 @@ model Task {
   status           TaskStatus   @default(TODO)
   priority         TaskPriority @default(MEDIUM)
   dueDate          DateTime?
+  completedAt      DateTime?
   lastActivityAt   DateTime     @default(now())
   calendarEventId  String?
   sourceMessageId  String?
@@ -492,13 +495,17 @@ model Message {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
+  projectId          String?
+
   person    Person?   @relation(fields: [personId], references: [id], onDelete: SetNull)
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id])
   tasks     Task[]
 
   @@unique([channel, externalId])
   @@index([workspaceId, channel])
   @@index([personId])
+  @@index([projectId])
   @@index([createdAt])
 }
 
@@ -637,6 +644,28 @@ model DayRecord {
 enum DayRecordType {
   OPEN_DAY
   CLOSE_DAY
+}
+
+model DayRitualConfig {
+  id                         String   @id @default(cuid())
+  userId                     String   @unique
+  preferredOpenTime          String?  // e.g. "09:00"
+  preferredCloseTime         String?  // e.g. "18:00"
+  timezone                   String   @default("Europe/Warsaw")
+  overdueEscalationDays      Int      @default(5)
+  blockedEscalationDays      Int      @default(3)
+  followUpStaleDays          Int      @default(3)
+  deadlineWarningDays        Int      @default(7)
+  stalledProjectDays         Int      @default(7)
+  criticalOverdueDays        Int      @default(3)
+  lowCompletionRateThreshold Int      @default(30)
+  priorityWeights            Json?    // PriorityWeights object; null = use defaults
+  aiLanguage                 String   @default("pl")
+  aiSummaryGuidance          String   @default("3-5 sentences, concise, action-oriented")
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ─── AI ───

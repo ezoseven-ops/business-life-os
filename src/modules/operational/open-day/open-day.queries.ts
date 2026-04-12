@@ -333,7 +333,10 @@ const eventSelect = {
 
 type RawEvent = Awaited<ReturnType<typeof prisma.event.findFirst<{ select: typeof eventSelect }>>>
 
-function mapEvent(e: NonNullable<RawEvent>): EventSnapshot {
+function mapEvent(
+  e: NonNullable<RawEvent>,
+  googleEventIds: Set<string>,
+): EventSnapshot {
   return {
     id: e.id,
     title: e.title,
@@ -344,7 +347,21 @@ function mapEvent(e: NonNullable<RawEvent>): EventSnapshot {
     attendees: e.attendees.map((a) => a.user.name ?? 'Unknown'),
     location: e.location,
     allDay: e.allDay,
+    isGoogleCalendar: googleEventIds.has(e.id),
   }
+}
+
+/** Bulk lookup: which event IDs have a GOOGLE_CALENDAR sync record */
+async function lookupGoogleEventIds(eventIds: string[]): Promise<Set<string>> {
+  if (eventIds.length === 0) return new Set()
+  const syncRecords = await prisma.calendarSyncMap.findMany({
+    where: {
+      eventId: { in: eventIds },
+      provider: 'GOOGLE_CALENDAR',
+    },
+    select: { eventId: true },
+  })
+  return new Set(syncRecords.map((r) => r.eventId))
 }
 
 /** E-TODAY: Events today */
@@ -364,7 +381,8 @@ export async function queryEventsToday(
     orderBy: { startAt: 'asc' },
   })
 
-  return events.map(mapEvent)
+  const googleIds = await lookupGoogleEventIds(events.map((e) => e.id))
+  return events.map((e) => mapEvent(e, googleIds))
 }
 
 /** E-TOMORROW: Events tomorrow */
@@ -385,7 +403,8 @@ export async function queryEventsTomorrow(
     orderBy: { startAt: 'asc' },
   })
 
-  return events.map(mapEvent)
+  const googleIds = await lookupGoogleEventIds(events.map((e) => e.id))
+  return events.map((e) => mapEvent(e, googleIds))
 }
 
 // ─── 2.4 Message Queries ───
@@ -489,6 +508,7 @@ export async function queryNotesRecent(
       createdAt: true,
       hasActionItems: true,
       project: { select: { id: true, name: true } },
+      _count: { select: { comments: true } },
     },
     orderBy: { createdAt: 'desc' },
   })
@@ -500,6 +520,7 @@ export async function queryNotesRecent(
     projectName: n.project?.name ?? null,
     createdAt: n.createdAt,
     hasActionItems: n.hasActionItems,
+    actionItemCount: n._count.comments, // best available proxy — no dedicated action-item model yet
   }))
 }
 

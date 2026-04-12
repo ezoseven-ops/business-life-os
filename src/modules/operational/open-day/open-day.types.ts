@@ -46,6 +46,7 @@ export interface EventSnapshot {
   attendees: string[] // attendee names
   location: string | null
   allDay: boolean
+  isGoogleCalendar: boolean // derived from CalendarSyncMap with provider = GOOGLE_CALENDAR
 }
 
 export interface MessageSnapshot {
@@ -66,6 +67,7 @@ export interface NoteSnapshot {
   projectName: string | null
   createdAt: Date
   hasActionItems: boolean
+  actionItemCount: number // derived from _count.comments (best available proxy; no dedicated action-item model exists yet)
 }
 
 export interface PersonSnapshot {

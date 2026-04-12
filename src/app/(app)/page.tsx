@@ -80,6 +80,46 @@ export default async function CommandCenter() {
           ))}
         </div>
 
+        {/* ── Open Day ── */}
+        <div className="pt-8">
+          <Link
+            href="/open-day"
+            prefetch={false}
+            className="flex items-center gap-3.5 rounded-2xl px-4 py-4 active:scale-[0.98]"
+            style={{
+              background: 'rgba(124, 110, 246, 0.06)',
+              border: '1px solid rgba(124, 110, 246, 0.12)',
+              transition: 'background 0.15s ease',
+            }}
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(124, 110, 246, 0.12)' }}
+            >
+              <svg className="w-5 h-5" style={{ color: '#7c6ef6' }} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-[15px] font-semibold leading-snug"
+                style={{ color: 'var(--color-cc-text)' }}
+              >
+                Open Day
+              </p>
+              <p
+                className="text-[12px] mt-0.5"
+                style={{ color: 'var(--color-cc-text-muted)' }}
+              >
+                Daily operator briefing
+              </p>
+            </div>
+            <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-cc-text-muted)' }} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          </Link>
+        </div>
+
         {/* ── Recent Activity ── */}
         {recentActivity.length > 0 && (
           <div className="pt-10">

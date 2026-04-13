@@ -69,6 +69,22 @@ const config: NextAuthConfig = {
         token.role = (user as { role?: string }).role
         token.workspaceId = (user as { workspaceId?: string | null }).workspaceId ?? null
       }
+
+      // Self-heal: if workspaceId is missing in the token but was assigned
+      // in the DB after initial sign-in, refresh it automatically.
+      // This prevents the "shell visible but pages empty" bug when the JWT
+      // was created before the user was linked to a workspace.
+      if (token.id && !token.workspaceId) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { workspaceId: true, role: true },
+        })
+        if (dbUser?.workspaceId) {
+          token.workspaceId = dbUser.workspaceId
+          token.role = dbUser.role
+        }
+      }
+
       return token
     },
     async session({ session, token }) {

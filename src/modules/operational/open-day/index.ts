@@ -21,6 +21,8 @@ export type {
   OpenDayQueryResults,
   OpenDayConfig,
   PriorityWeights,
+  CloseDayBriefing,
+  CloseDayQueryResults,
 } from './open-day.types'
 
 export {
@@ -29,7 +31,7 @@ export {
 } from './open-day.types'
 
 // Queries
-export { runOpenDayQueries } from './open-day.queries'
+export { runOpenDayQueries, runCloseDayQueries, queryTasksFailedToday } from './open-day.queries'
 
 // Builder
 export { buildOpenDayBriefing } from './open-day.builder'

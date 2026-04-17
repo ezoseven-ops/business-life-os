@@ -159,6 +159,70 @@ export interface OpenDayBriefing {
   }
 }
 
+// ─── Close Day Briefing (spec section 4.2) ───
+
+export interface CloseDayBriefing {
+  metadata: {
+    date: string // "YYYY-MM-DD"
+    generatedAt: Date
+    userId: string
+    dayOfWeek: string
+  }
+
+  delivered: {
+    tasksCompleted: TaskSnapshot[]
+    count: number
+  }
+
+  notDelivered: {
+    tasksFailed: TaskSnapshot[] // due today, not DONE
+    count: number
+  }
+
+  carryOver: {
+    toTomorrow: TaskSnapshot[] // overdue + blocked, auto-rescheduled
+    count: number
+  }
+
+  escalations: {
+    items: CriticalItem[]
+    count: number
+  }
+
+  risks: {
+    items: CriticalItem[] // deadline risk, stalled projects
+    count: number
+  }
+
+  tomorrowOutlook: {
+    tasksPlanned: TaskSnapshot[]
+    carryOverCount: number
+    events: EventSnapshot[]
+  }
+
+  summary: {
+    aiNarrative?: string // populated by Phase C AI summary generator
+    totalDelivered: number
+    totalNotDelivered: number
+    totalCarryOver: number
+    completionRate: number // delivered / (delivered + notDelivered) as 0-1
+  }
+}
+
+// ─── Close Day Query Results (what the Close Day composite returns) ───
+
+export interface CloseDayQueryResults {
+  tasksCompleted: TaskSnapshot[]
+  tasksFailed: TaskSnapshot[]
+  tasksOverdue: TaskSnapshot[]
+  tasksTomorrow: TaskSnapshot[]
+  tasksBlocked: TaskSnapshot[]
+  activeProjects: ProjectSnapshot[]
+  projectTeams: Map<string, PersonSnapshot[]>
+  eventsTomorrow: EventSnapshot[]
+  messagesFollowUp: MessageSnapshot[]
+}
+
 // ─── Builder Input (what the builder receives) ───
 
 export interface OpenDayQueryResults {

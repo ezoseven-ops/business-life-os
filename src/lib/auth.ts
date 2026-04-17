@@ -44,10 +44,35 @@ if (process.env.NODE_ENV === 'development') {
           })
         }
 
+        // Dev convenience: ensure the user has a workspace.
+        // Without a workspace, every (app) page returns null.
+        if (!user.workspaceId) {
+          // Check if user already owns a workspace (ownerId is @unique)
+          let workspace = await prisma.workspace.findUnique({
+            where: { ownerId: user.id },
+          })
+          if (!workspace) {
+            const slug = email.split('@')[0].replace(/[^a-z0-9]/gi, '-').toLowerCase()
+            workspace = await prisma.workspace.create({
+              data: {
+                name: `${name}'s Workspace`,
+                slug: `${slug}-${Date.now()}`,
+                ownerId: user.id,
+              },
+            })
+          }
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: { workspaceId: workspace.id },
+          })
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role,
+          workspaceId: user.workspaceId,
         }
       },
     })
@@ -74,14 +99,23 @@ const config: NextAuthConfig = {
       // in the DB after initial sign-in, refresh it automatically.
       // This prevents the "shell visible but pages empty" bug when the JWT
       // was created before the user was linked to a workspace.
-      if (token.id && !token.workspaceId) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { workspaceId: true, role: true },
-        })
-        if (dbUser?.workspaceId) {
-          token.workspaceId = dbUser.workspaceId
-          token.role = dbUser.role
+      //
+      // GUARD: Only run in Node.js runtime. Prisma cannot execute in edge
+      // runtime (middleware), so we skip the DB lookup there. The self-heal
+      // will run on the next server-side page render instead.
+      const isEdgeRuntime = typeof (globalThis as Record<string, unknown>).EdgeRuntime === 'string'
+      if (token.id && !token.workspaceId && !isEdgeRuntime) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { workspaceId: true, role: true },
+          })
+          if (dbUser?.workspaceId) {
+            token.workspaceId = dbUser.workspaceId
+            token.role = dbUser.role
+          }
+        } catch {
+          // Silently skip if Prisma is unavailable (e.g. edge runtime fallthrough)
         }
       }
 

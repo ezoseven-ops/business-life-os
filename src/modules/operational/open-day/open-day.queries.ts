@@ -201,6 +201,27 @@ export async function queryTasksCompletedToday(
   return tasks.map(mapTask)
 }
 
+/** T-FAILED-TODAY: Tasks due today that are NOT done (Close Day) */
+export async function queryTasksFailedToday(
+  workspaceId: string,
+  date: Date,
+): Promise<TaskSnapshot[]> {
+  const dayStart = startOfDay(date)
+  const dayEnd = endOfDay(date)
+
+  const tasks = await prisma.task.findMany({
+    where: {
+      project: { workspaceId },
+      dueDate: { gte: dayStart, lte: dayEnd },
+      status: { not: 'DONE' },
+    },
+    select: taskSelect,
+    orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }],
+  })
+
+  return tasks.map(mapTask)
+}
+
 // ─── 2.2 Project Queries ───
 
 /** P-ACTIVE: Active projects with task counts */
@@ -526,7 +547,7 @@ export async function queryNotesRecent(
 
 // ─── Composite: Run All Open Day Queries ───
 
-import type { OpenDayQueryResults } from './open-day.types'
+import type { OpenDayQueryResults, CloseDayQueryResults } from './open-day.types'
 
 /**
  * Execute all Open Day data queries in parallel.
@@ -580,5 +601,50 @@ export async function runOpenDayQueries(
     messagesFollowUp,
     messagesAwaiting,
     notesRecent,
+  }
+}
+
+// ─── Composite: Run All Close Day Queries ───
+
+/**
+ * Execute all Close Day data queries in parallel.
+ * Returns raw query results for the Close Day builder to aggregate.
+ */
+export async function runCloseDayQueries(
+  workspaceId: string,
+  date: Date,
+): Promise<CloseDayQueryResults> {
+  const [
+    tasksCompleted,
+    tasksFailed,
+    tasksOverdue,
+    tasksTomorrow,
+    tasksBlocked,
+    activeProjects,
+    projectTeams,
+    eventsTomorrow,
+    messagesFollowUp,
+  ] = await Promise.all([
+    queryTasksCompletedToday(workspaceId, date),
+    queryTasksFailedToday(workspaceId, date),
+    queryTasksOverdue(workspaceId, date),
+    queryTasksTomorrow(workspaceId, date),
+    queryTasksBlocked(workspaceId),
+    queryActiveProjects(workspaceId, date),
+    queryProjectTeams(workspaceId),
+    queryEventsTomorrow(workspaceId, date),
+    queryMessagesFollowUp(workspaceId),
+  ])
+
+  return {
+    tasksCompleted,
+    tasksFailed,
+    tasksOverdue,
+    tasksTomorrow,
+    tasksBlocked,
+    activeProjects,
+    projectTeams,
+    eventsTomorrow,
+    messagesFollowUp,
   }
 }

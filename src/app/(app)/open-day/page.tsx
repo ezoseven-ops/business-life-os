@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Header } from '@/components/Header'
+import { useSpeech } from '@/hooks/useSpeech'
 import {
   executeOpenDayAction,
   getOpenDayAction,
@@ -54,6 +55,7 @@ export default function OpenDayPage() {
   const [result, setResult] = useState<ExecuteResult | null>(null)
   const [existing, setExisting] = useState<ExistingRecord | null>(null)
   const [mode, setMode] = useState<'idle' | 'executed' | 'loaded'>('idle')
+  const { speak, stop, isSpeaking } = useSpeech()
 
   async function handleExecute() {
     if (loading) return
@@ -202,12 +204,24 @@ export default function OpenDayPage() {
                 border: '1px solid rgba(124,110,246,0.12)',
               }}
             >
-              <p
-                className="text-xs font-semibold uppercase tracking-wider mb-2"
-                style={{ color: 'var(--color-cc-accent, #7c6ef6)' }}
-              >
-                Operator Briefing
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--color-cc-accent, #7c6ef6)' }}
+                >
+                  Operator Briefing
+                </p>
+                <button
+                  onClick={() => isSpeaking ? stop() : speak(result.aiSummary)}
+                  className="text-xs font-semibold px-3 py-1 rounded-lg transition-all active:scale-[0.95]"
+                  style={{
+                    background: isSpeaking ? 'rgba(239,68,68,0.12)' : 'rgba(124,110,246,0.12)',
+                    color: isSpeaking ? '#ef4444' : 'var(--color-cc-accent, #7c6ef6)',
+                  }}
+                >
+                  {isSpeaking ? 'Stop' : 'Play Briefing'}
+                </button>
+              </div>
               <p
                 className="text-sm leading-relaxed"
                 style={{ color: 'var(--color-cc-text, #fff)' }}
@@ -262,12 +276,24 @@ export default function OpenDayPage() {
                 border: '1px solid rgba(124,110,246,0.12)',
               }}
             >
-              <p
-                className="text-xs font-semibold uppercase tracking-wider mb-2"
-                style={{ color: 'var(--color-cc-accent, #7c6ef6)' }}
-              >
-                Stored Briefing
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: 'var(--color-cc-accent, #7c6ef6)' }}
+                >
+                  Stored Briefing
+                </p>
+                <button
+                  onClick={() => isSpeaking ? stop() : speak(existing.aiSummary)}
+                  className="text-xs font-semibold px-3 py-1 rounded-lg transition-all active:scale-[0.95]"
+                  style={{
+                    background: isSpeaking ? 'rgba(239,68,68,0.12)' : 'rgba(124,110,246,0.12)',
+                    color: isSpeaking ? '#ef4444' : 'var(--color-cc-accent, #7c6ef6)',
+                  }}
+                >
+                  {isSpeaking ? 'Stop' : 'Play Briefing'}
+                </button>
+              </div>
               <p
                 className="text-sm leading-relaxed"
                 style={{ color: 'var(--color-cc-text, #fff)' }}
